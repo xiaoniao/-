@@ -1,0 +1,80 @@
+创建数据源
+
+
+just()
+
+  convert an object or several objects into an Observable that emits that object or those objects
+
+  把数据包装进Observable然后射出去，数据不支持数组，最多有 10 条记录。如果传的是List<> 放的是一个List对象而不是一个数组
+
+  next方法 只会执行一次 [一次]
+
+from()
+
+  convert an Iterable, a Future, or an Array into an Observable
+
+  转换数组进Observable
+
+  next方法 如果是数组会执行多次 [一次或多次]
+
+repeat() 非静态
+
+  create an Observable that emits a particular item or sequence of items repeatedly
+
+  重复的发射数据
+
+repeatWhen()
+
+  create an Observable that emits a particular item or sequence of items repeatedly, depending on the emissions of a second Observable
+
+  重复发射数据，依赖于创建的第二个Observable
+
+create()
+
+  create an Observable from scratch by means of a function
+
+  根据函数创建 Observable
+
+defer()
+
+  do not create the Observable until a Subscriber subscribes; create a fresh Observable on each subscription
+
+  先不创建 Observable ，等到绑定了 subscriber 再创建，然后发射
+
+range()
+
+  create an Observable that emits a range of sequential integers
+
+  发射一个区间的所有数字 Integer
+
+interval( )
+
+  create an Observable that emits a sequence of integers spaced by a given time interval
+
+  创建一个指定时间重复执行的 Observable 类型是Long , 相当于一个计时器 Long
+
+timer( )
+
+  create an Observable that emits a single item after a given delay
+
+  定时创建一个 Observable，比如10秒钟后执行一个操作
+
+empty( )
+
+  create an Observable that emits nothing and then completes
+
+  创建一个什么也不发射的 Observable，然后结束
+
+error( )
+
+  create an Observable that emits nothing and then signals an error
+
+  创建一个什么也不发射的 Observable，然后发出一个错误
+
+never( )
+
+  create an Observable that emits nothing at all
+
+  创建一个什么也不发射的 Observables
+
+发射是指发射数据，数据开始流动，发射数据是从绑定subscriber开始发射的 subscribe()

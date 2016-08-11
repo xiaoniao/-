@@ -1,0 +1,52 @@
+Error Handling Operators
+
+错误处理操作符
+
+There are a variety of operators that you can use to react to or recover from onError notifications from Observables.
+
+这几个操作符号，可以对错误作出反应或者恢复
+
+For example, you might:
+
+1、swallow the error and switch over to a backup Observable to continue the sequence
+
+    处理这个错误并且切换到备用的Observable继续传播
+
+2、swallow the error and emit a default item
+    处理这个错误并且发射一个默认的数据
+
+3、swallow the error and immediately try to restart the failed Observable
+    处理这个错误并且立即尝试重启这个失败的Observable
+
+4、swallow the error and try to restart the failed Observable after some back-off interval
+    处理这个错误并且在回滚处理然后尝试重启这个失败的Observable
+
+
+
+The following pages explain these operators.
+
+
+onErrorResumeNext()
+
+  instructs an Observable to emit a sequence of items if it encounters an error
+  指示 Observable 当遇到错误时重新开始执行下一个Observable
+
+onErrorReturn()
+
+  instructs an Observable to emit a particular item when it encounters an error
+  指定 Observable 遇到错误是发射一个特殊的数据
+
+onExceptionResumeNext()
+
+  instructs an Observable to continue emitting items after it encounters an exception (but not another variety of throwable)
+  继续提交数据，当遇到异常的时候 (不是throwable)
+
+retry()
+
+  if a source Observable emits an error, resubscribe to it in the hopes that it will complete without error
+  当Observable提交error的时候，再提交一个Subscriber继续执行
+
+retryWhen()
+
+  if a source Observable emits an error, pass that error to another Observable to determine whether to resubscribe to the source
+  决定是否retry

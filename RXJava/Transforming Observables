@@ -1,0 +1,45 @@
+Transforming Observables
+
+转换数据源
+
+This page shows operators with which you can transform items that are emitted by an Observable.
+
+
+map( )
+
+  transform the items emitted by an Observable by applying a function to each of them
+  映射 转换发射的数据 －－添加一个函数为每一个发射的数据进行一次转换
+
+flatMap( ), concatMap( ), and flatMapIterable( )
+
+  transform the items emitted by an Observable into Observables (or Iterables), then flatten this into a single Observable
+  flatten 压缩精减, 把从一个数据源中发射出来的数据转换到多个数据源中 ，然后在压缩成一个 Observable
+
+switchMap( )
+
+  transform the items emitted by an Observable into Observables, and mirror those items emitted by the most-recently transformed Observable
+  
+
+scan( )
+
+  apply a function to each item emitted by an Observable, sequentially, and emit each successive value
+
+
+groupBy( )
+
+  divide an Observable into a set of Observables that emit groups of items from the original Observable, organized by key
+
+
+buffer( )
+
+  periodically gather items from an Observable into bundles and emit these bundles rather than emitting the items one at a time
+
+
+window( )
+
+  periodically subdivide items from an Observable into Observable windows and emit these windows rather than emitting the items one at a time
+
+
+cast( )
+
+  cast all items from the source Observable into a particular type before reemitting them

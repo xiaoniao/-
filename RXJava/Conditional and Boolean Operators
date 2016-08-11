@@ -1,0 +1,94 @@
+Conditional and Boolean Operators
+
+条件和布尔判断操作
+
+
+This section explains operators with which you conditionally emit or transform Observables,
+or can do boolean evaluations of them:
+
+有条件的发射或者转换数据，也可以对他们进行布尔操作
+
+
+Conditional Operators
+
+
+amb()
+
+  given two or more source Observables, emits all of the items from the first of these Observables to emit an item
+  给多个Observable，然后每个Observable都是调用的第一个Observable的第一项数据
+
+defaultIfEmpty()
+
+  emit items from the source Observable, or emit a default item if the source Observable completes after emitting no items
+  在 complete 前还没有提交过数据就，就发射一个默认值
+
+(rxjava-computation-expressions) doWhile( )
+
+  emit the source Observable's sequence, and then repeat the sequence as long as a condition remains true
+
+
+(rxjava-computation-expressions) ifThen( )
+
+  only emit the source Observable's sequence if a condition is true, otherwise emit an empty or default sequence
+
+
+skipUntil()
+
+  discard items emitted by a source Observable until a second Observable emits an item,
+  then emit the remainder of the source Observable's items
+  等第二个 Observable 发射过数据并执行完之后，开始发射第一个 Observable 的数据
+
+skipWhile()
+
+  discard items emitted by an Observable until a specified condition is false, then emit the remainder
+  条件为true时，停止发射数据
+
+(rxjava-computation-expressions) switchCase( )
+
+  emit the sequence from a particular Observable based on the results of an evaluation
+
+
+takeUntil()
+
+  emits the items from the source Observable until a second Observable emits an item or issues a notification
+  第二个不发送消息的时第一个才会执行
+
+takeWhile() and takeWhileWithIndex()
+
+  emit items emitted by an Observable as long as a specified condition is true, then skip the remainder
+  为true显示，为false时停止发射
+
+(rxjava-computation-expressions) whileDo( )
+
+  if a condition is true, emit the source Observable's sequence and then repeat the sequence
+  as long as the condition remains true
+
+
+
+Boolean Operators 结果是true或false
+
+
+all()
+
+  determine whether all items emitted by an Observable meet some criteria
+  每一发数据 条件都满足 最终结果返回 true ，订阅者返回类型 Boolean
+
+contains()
+
+  determine whether an Observable emits a particular item or not
+  判断Observable里面是不是包含某个元素，如果判断为true就不往下判断了
+
+exists() and isEmpty()
+
+  determine whether an Observable emits any items or not
+  判断Observable里面是不是有某个元素
+  判断Observable里面是不是没有数据
+
+sequenceEqual()
+
+  test the equality of the sequences emitted by two Observables
+  比较两个Observable是否相等，可以自己写判定条件
+
+
+
+。

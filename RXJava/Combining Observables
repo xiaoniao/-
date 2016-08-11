@@ -1,0 +1,62 @@
+Combining Observables
+
+合并数据源
+
+This section explains operators you can use to combine multiple Observables.
+教你如何合并多个数据源
+
+
+startWith()
+
+  emit a specified sequence of items before beginning to emit the items from the Observable
+  直接合并数据，或者合并 Observable , 注意后追加的那一批先显示
+
+merge()
+
+  combine multiple Observables into one
+  多个数据源合并成一个数据源，如果中途有抛出error就停止合并
+
+mergeDelayError()
+
+  combine multiple Observables into one, allowing error-free Observables to continue before propagating errors
+  多个数据源合并成一个数据源，如果中途遇见error，不会停止合并，然后把error信息放到最后，但是如果有多个error只显示最后一个error
+
+zip()
+
+  combine sets of items emitted by two or more Observables together via a specified function
+  and emit items based on the results of this function
+  T1 T2 合并成 R，自己定义合成的规则，T1 T2 一对一的合并，按最小的长度进行合并，多余的忽略
+
+
+(rxjava-joins) and( ), then( ), and when( )
+
+  combine sets of items emitted by two or more Observables by means of Pattern and Plan intermediaries
+
+
+combineLatest()
+
+  when an item is emitted by either of two Observables, combine the latest item emitted by each
+  Observable via a specified function and emit items based on the results of this function
+  前几个的最后一项数据和最后一个每一项数据依次组合在一起
+
+join() and groupJoin()
+
+  combine the items emitted by two Observables
+  whenever one item from one Observable falls within a window of duration specified
+  by an item emitted by the other Observable
+
+  时间段
+  结合两个数据源的数据，每当从一个数据源中发射出来一个数据落在一个指定的时间段中
+
+  指的是发射多次的数据源
+
+  第一个参数：Observable<TRight> right
+  第二个参数：Func1<T, Observable<TLeftDuration>> leftDurationSelector
+  第三个参数：Func1<TRight, Observable<TRightDuration>> rightDurationSelector
+  第四个参数：Func2<T, TRight, R> resultSelector)
+
+
+switchOnNext( )
+
+  convert an Observable that emits Observables into a single Observable that
+  emits the items emitted by the most-recently emitted of those Observables
