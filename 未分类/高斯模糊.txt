@@ -1,0 +1,4 @@
+http://www.ruanyifeng.com/blog/2012/11/gaussian_blur.html
+https://www.zhihu.com/question/26629096
+http://bbs.csdn.net/topics/380203851
+http://oppei.tumblr.com/post/47346262/super-fast-blur-v11-by-mario-klingemann

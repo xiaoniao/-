@@ -1,0 +1,135 @@
+<html>
+<meta charset="utf-8"/>
+<body>
+    <div id='box' style="background-color: red">111</div>
+    <ul>
+        <li>one</li>
+        <li>two</li>
+        <li>three</li>
+        <li>one</li>
+    </ul>
+    JavaScript中的匿名函数及函数的闭包 http://www.cnblogs.com/rainman/archive/2009/05/04/1448899.html<br>
+    java中的匿名内部类总结 http://www.cnblogs.com/nerxious/archive/2013/01/25/2876489.html<br>
+    JAVA闭包 http://www.cnblogs.com/chenjunbiao/archive/2011/01/26/1944417.html<br>
+</body>
+<script>
+    //
+    // // 匿名函数
+    // var sequare = function(x) {
+    //     return x * x;
+    // }
+    // alert(sequare(10));
+    //
+    // (function(x,y){
+    //     alert(x + y);
+    // })(2,3);
+    //
+    // // 上面的相当于
+    // var add = function(x,y){
+    //     alert(x + y);
+    // };
+    // add(10,10);
+    //
+    // // closure 闭包 函数的嵌套，内层的函数可以使用外层的函数变量 | java中就是匿名内部类
+    // function checkClosure() {
+    //     var str = 'main';
+    //     setTimeout(function() {
+    //         alert(str);
+    //     },1000);
+    // }
+    // checkClosure();
+    //
+    // // js中函数可以作为参数，要注意是传函数还是函数的结果
+    // // javaScript中函数和java中函数的表示方法?
+    // // javascript和java闭包在内存中的表示?
+    // function forTimeout(x,y) {
+    //     alert(x + y);
+    // };
+    // // function delay(x, y, time) {
+    // //     // setTimeout(
+    // //     //     forTimeout(x,y)
+    // //     // ,time);
+    // //     // setTimeout(
+    // //     //     forTimeout
+    // //     // ,time);
+    // // };
+    // function delay(x , y  , time){
+    //     setTimeout('forTimeout(' +  x + ',' +  y + ')' , time);
+    //     // eval
+    //     // http://www.w3school.com.cn/jsref/met_win_settimeout.asp
+    //     // http://www.w3school.com.cn/jsref/jsref_eval.asp
+    // }
+    // delay(1,1,1000);
+    //
+    // // 匿名函数闭包的使用
+    // var oEvent = {};
+    // (function() {
+    //     var addEvent = function(element,method,click) {
+    //         if (method == 'click') {
+    //             element.onclick = click;
+    //         }
+    //     };
+    //     function removeEnent() {
+    //
+    //     };
+    //
+    //     oEvent.addEvent = addEvent;
+    //     oEvent.removeEnent = removeEnent;
+    // })();
+    // oEvent.addEvent(document.getElementById('box'),'click',function(){alert('click me')});
+    //
+    // // 调用匿名函数并赋值
+    // var main = (function(x, y) {
+    //     return x + y;
+    // })(2,3);
+    // alert('main = ' + main);
+    //
+    // //
+    // var outer = null;
+    // (function(){
+    //     var one = 1;
+    //     function inner(){
+    //         one += 1;
+    //         alert('outer inner : ' + one)
+    //     }
+    //     outer = inner; //函数赋值给变量
+    // })();
+    // outer();
+    // outer();
+
+    // 闭包的变量
+    var lists = document.getElementsByTagName('li');
+    for (var i = 0; i < lists.length; i++) {
+        // 1 (直接使用对象)
+        // lists[i].onmouseover  = function() {
+        //     alert(i); // 像在java中，如果匿名内部类使用外部的变量外部的变量需要声明为final
+        // };
+
+        // 2匿名函数套匿名函数(拷贝一份对象)
+        // (function(index){
+        //     lists[index].onmouseover  = function() {
+        //         alert(index);
+        //     };
+        // })(i);
+
+        // 3绑定到对象上(拷贝一份对象)
+        // lists[i].$$index22 = i;
+        // lists[i].onmouseover  = function() {
+        //     alert(this.$$index22);
+        // };
+
+        // 4拷贝一份对象
+        eventlistener(lists[i], i);
+    }
+
+    function eventlistener(list, index) {
+        list.onmouseover  = function() {
+            alert(index);
+        };
+    }
+
+    // javascript函数可以实现闭包，java中匿名内部类可以实现闭包
+
+</script>
+
+</html>

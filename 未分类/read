@@ -1,0 +1,64 @@
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+read()
+    Reads a single character. This method will block until a character is available, an I/O error occurs, or the end of the stream is reached.
+    Subclasses that intend to support efficient single-character input should override this method.
+
+    Returns:
+    The character read, as an integer in the range 0 to 65535 (0x00-0xffff), or -1 if the end of the stream has been reached
+    Throws:
+    IOException - If an I/O error occurs
+
+只要流不断开 不close 不异常 read()就会一直阻塞,一直会等待来数据
+
+socket 中有两种方法解决
+    1、自己约定结束标识
+    2、发送方的流close或者异常
+
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+这个时候需要注意的是，BufferedReader的readLine方法是一次读一行的，这个方法是阻塞的，直到它读到了一行数据为止程序才会继续往下执行，那么readLine什么时候才会读到一行呢？
+直到程序遇到了换行符或者是对应流的结束符readLine方法才会认为读到了一行，才会结束其阻塞，让程序继续往下执行。
+所以我们在使用BufferedReader的readLine读取数据的时候一定要记得在对应的输出流里面一定要写入换行符（流结束之后会自动标记为结束，readLine可以识别），
+写入换行符之后一定记得如果输出流不是马上关闭的情况下记得flush一下，这样数据才会真正的从缓冲区里面写入。
+
+阻塞是因为 readLine() 的实现是 while(true) + for()
+
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+\r    Mac
+\n    Unix
+\r\n  Windows
+
+http://www.cnblogs.com/xiaotiannet/p/3510586.html
+http://blog.csdn.net/xiaofei2010/article/details/8458605
+不要在 eclipse Console 中运行
+
+\r Carriage Return  回车
+\n Line Feed        换行
+
+[java 中用的都是\n]
+
+[Carriage 运输]
+
+
+\r 是光标回到开头，\n 是光标往下移一行
+CR 将打印头挪到行首，LF 将它移动到下一行
+
+https://en.wikipedia.org/wiki/Carriage_return#References
+https://en.wikipedia.org/wiki/Newline
+http://www.ebay.com/bhp/smith-corona-typewriter ebay 打印机
+
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+什么时候会返回-1 如何判断数据读到结尾了
+
+ByteArrayInputStream
+return pos < count ? buf[pos++] & 0xFF : -1;
+
+FileInputStream
+应该和上面的一样 如果读完所有字节就返回-1
+
+读字节
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+..

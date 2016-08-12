@@ -1,0 +1,9 @@
+传输的都是字节
+
+以什么方式读取：
+    基于字节操作的 I/O 接口：InputStream 和 OutputStream
+    基于字符操作的 I/O 接口：Writer 和 Reader
+
+
+    基于磁盘操作的 I/O 接口：File
+    基于网络操作的 I/O 接口：Socket

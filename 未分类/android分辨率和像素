@@ -1,0 +1,170 @@
+ bitmap.getScaledWidth(density) 这个方法是什么意思？
+ bitmap.getWidth()是获得宽的像素
+
+
+一、手机分辨率
+
+Nexus 5
+    主屏尺寸： 4.95英寸（对角线物理尺寸）
+    主屏分辨率： 1920x1080像素
+
+iphone 6
+    主屏尺寸：4.7英寸（对角线物理尺寸）
+    分辨率：1334×750
+
+一英寸 = 2.54厘米 英寸是物理单位 像素代表的是颜色，越精细颜色值约丰富，它没有实际的大小
+|_____|_____|___| 2.54 厘米
+
+分辨率1334*750的意思是，横轴和竖轴可以显示的像素块是1334和750,这个是由造屏幕的决定的，造出来就不能改了物理配置。（肉眼看一个像素对应的就是一个颜色[赤橙黄绿青蓝紫...]，用代码表示呢就是ARGB二进制 00ffffff, 根据所能呈现颜色的杜少可以分为这几种
+    ALPHA_8 一个像素一个字节   透明度占8位
+    RGB_565 一个像素二个字节   没有透明度  红色5位 绿色6位 蓝色5位 可以表示的颜色 32*64*32=65536
+    ARGB_4444 一个像素二个字节 透明度占4位 红色4位 绿色4位 蓝色4位 可以表示的颜色 16*16*16=4096 在android 上这个不推荐使用了，因为表现出来的像素颜色太渣
+    ARGB_8888 一个像素四个字节 透明度占8位 红色8位 绿色8位 蓝色8位 可以表示的颜色 256*256*256=16777216
+    ）
+
+知道屏幕物理尺寸和像素个数了，就要求密度了（不是按面积算的，算的是一种比例)。
+
+屏幕像素密度PPI(pixel per inch)
+    为什么用对角线，因为你不知道屏幕的长宽（好像可以知道）
+
+ppi = 开根号（pixelx^2 + pixely^2）/ inch;
+
+虚拟像素斜对角 / 物理尺寸斜对角 = 一种比例关系
+
+比如一行200*200的图片，屏幕分辨率越高显示的物理大小显示的大小越小
+
+
+二、
+在 android 里面，dpi 和 ppi 一个概念
+
+联系下面经常碰到的资源目录就明白了
+    drawable
+    drawable-hdpi
+    drawalbe-ldpi
+    drawable-mdpi
+    drawable-xhdpi
+    drawable-xxhdpi
+
+--
+DisplayMetrics density 是一个基准值 可以用来px和dp转换
+
+PPI(dpi)  density
+160        1 基准 1dip = 1px（像素是一个颜色值，这个块在有的屏幕上大有的屏幕上小）
+120        0.75   1dip = 0.75px
+80         0.5
+
+三、
+
+系统的PPI(dpi)是屏幕厂商直接写在本地文件里的
+
+这里是代码的获取过程
+public static int DENSITY_DEVICE = getDeviceDensity();
+private static int getDeviceDensity() {
+    // qemu.sf.lcd_density can be used to override ro.sf.lcd_density
+    // when running in the emulator, allowing for dynamic configurations.
+    // The reason for this is that ro.sf.lcd_density is write-once and is
+    // set by the init process when it parses build.prop before anything else.
+    return SystemProperties.getInt("qemu.sf.lcd_density",SystemProperties.getInt("ro.sf.lcd_density", DENSITY_DEFAULT));
+}
+
+下面是常用的PPI值
+
+public static final int DENSITY_LOW = 120;
+public static final int DENSITY_MEDIUM = 160;
+public static final int DENSITY_TV = 213;
+public static final int DENSITY_HIGH = 240;
+public static final int DENSITY_280 = 280;
+public static final int DENSITY_XHIGH = 320;
+public static final int DENSITY_360 = 360;
+public static final int DENSITY_400 = 400;
+public static final int DENSITY_420 = 420;
+public static final int DENSITY_XXHIGH = 480;
+public static final int DENSITY_560 = 560;
+public static final int DENSITY_XXXHIGH = 640;
+public static final int DENSITY_DEFAULT = DENSITY_MEDIUM;
+
+四、
+
+public int getScaledHeight(DisplayMetrics metrics) {
+  return scaleFromDensity(getHeight(), mDensity, metrics.densityDpi);
+}
+
+static public int scaleFromDensity(int size, int sdensity, int tdensity) {
+    if (sdensity == DENSITY_NONE || tdensity == DENSITY_NONE || sdensity == tdensity) {
+        return size;
+    }
+
+    // Scale by tdensity / sdensity, rounding up.
+    return ((size * tdensity) + (sdensity >> 1)) / sdensity;
+}
+
+size:像素大小 sdendity:原屏幕PPI(dpi) tdensity:新屏幕PPI
+
+例如：
+    size 100, sdendity 20, tdensity 30
+
+    ((100 * 30) + (20 / 2)) / 20
+
+    150 150.5
+
+    double 转 int 四舍五入 加 0.5
+    149.5 150
+    149.4 149.9
+
+    加0.5就是为了4舍5入
+
+结论：bitmap.getScaledWidth(density) 如果不是屏幕分辨率修改了，似乎没什么用处。
+
+如何计算图片所占的内存？（和图片大小没关系，因为图片还有一个压缩数据的过程，显示到界面上的是像素，大小和像素所占的字节有关系）
+
+
+
+Possible bitmap configurations.A bitmap configuration describes how pixels are stored.
+This affects the quality (color depth) as well as the ability to display transparent/translucent colors.
+
+/**
+ * Each pixel is stored as a single translucency (alpha) channel. This is very useful to efficiently store masks for instance.
+ * No color information is stored. With this configuration, each pixel requires 1 byte of memory.
+ * 一字节 alpha 8bit
+ */
+ALPHA_8     (1),
+
+/**
+ * Each pixel is stored on 2 bytes and only the RGB channels are encoded:
+ *  red is stored with 5 bits of precision (32 possible values),
+ *  green is stored with 6 bits of precision (64 possible values) and
+ *  blue is stored with 5 bits of precision.
+ *
+ * This configuration can produce slight visual artifacts depending on the configuration of the source.
+ * For instance, without dithering, the result might show a greenish tint. To get better results dithering should be applied.
+ *
+ * This configuration may be useful when using opaque bitmaps that do not require high color fidelity.
+ *
+ * 两个字节 read 5bit green 6bit blue 5bit
+ */
+RGB_565     (3),
+
+/**
+ * Each pixel is stored on 2 bytes. The three RGB color channels and the alpha channel (translucency) are stored with a 4 bits precision (16 possible values.)
+ *
+ * This configuration is mostly useful if the application needs to store translucency information but also needs to save memory.
+ *
+ * It is recommended to use {@link #ARGB_8888} instead of this configuration.
+ *
+ * Note: as of {@link android.os.Build.VERSION_CODES#KITKAT}, any bitmap created with this configuration will be created using {@link #ARGB_8888} instead.
+ *
+ * @deprecated Because of the poor quality of this configuration, it is advised to use {@link #ARGB_8888} instead.
+ * 两个字节
+ */
+@Deprecated
+ARGB_4444   (4),
+
+/**
+ * Each pixel is stored on 4 bytes. Each channel (RGB and alpha for translucency) is stored with 8 bits of precision (256 possible values.)
+ *
+ * This configuration is very flexible and offers the best quality. It should be used whenever possible.
+ * 四个字节
+ */
+ARGB_8888   (5);
+
+代码创建图片

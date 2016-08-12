@@ -1,0 +1,8 @@
+什么是单例？ 类只有一个实例
+怎么实现单例？用static来实现 类的变量，不是类实例的变量
+问题？多线程
+
+Java：单例模式的七种写法 http://www.blogjava.net/kenzhh/archive/2011/09/02/357824.html
+单例模式 https://zh.wikipedia.org/wiki/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F
+如何正确地写出单例模式 http://wuchong.me/blog/2014/08/28/how-to-correctly-write-singleton-pattern/
+深入浅出单实例Singleton设计模式 http://coolshell.cn/articles/265.html

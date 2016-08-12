@@ -1,0 +1,118 @@
+官方教程 http://developer.android.com/training/volley/index.html
+
+Android库Volley的使用介绍 http://bxbxbai.github.io/2014/09/14/android-working-with-volley/
+
+Android Volley完全解析(一)，初识Volley的基本用法 http://blog.csdn.net/guolin_blog/article/details/17482095
+
+Android Volley完全解析(二)，使用Volley加载网络图片 http://blog.csdn.net/guolin_blog/article/details/17482165
+
+Android Volley完全解析(三)，定制自己的Request http://blog.csdn.net/guolin_blog/article/details/17612763
+
+Android Volley完全解析(四)，带你从源码的角度理解Volley http://blog.csdn.net/guolin_blog/article/details/17656437
+
+Android访问网络，使用HttpURLConnection还是HttpClient？ http://blog.csdn.net/guolin_blog/article/details/12452307
+
+Android高效加载大图、多图解决方案，有效避免程序OOM http://blog.csdn.net/guolin_blog/article/details/9316683
+
+///
+西_木 2014-11-05 20:14发表 [回复] [引用] [举报]作者你
+作者你好， 看了你的文章，再实际敲了一下代码，发现LRUCache并不不会释放内存，因为LRUCache的entryRemoved方法默认不会对bitmap做recycle操作，只是在cache里没有索引了，
+bitmap还留存在内存中，而Imageview还持有对bitmap的引用，因此GC不会回收它，内存并没释放。而你的GridView中内存之所以没有增加，是因为GridView会重用之前的ImageView,
+而ImageView重新setImageBitmap, 就释放掉了对之前bitmap的引用，之前的bitmap就会被回收，因此能保持内存的不变，再多的图片也不会挂，同理，在你的瀑布流那篇文章中，
+内存的稳定是因为checkVisibility函数的存在，这个函数内部会对不可见的ImageView set一个空的photo， 对bitmap的引用就消失了，如果bitmap此时被驱逐出cache，它就会被GC回收。
+我试了一下，注释掉checkVisibility，则内存使用量会随着你加载的Image数量上升，.当然，你可以不做这些操作，重写LRUCache的entryRemoved方法并调用oldBitmap.recycle()释放它所持有的pixelData，
+但是这样做，会及其不稳定，因为有可能当前显示在图像上的Imageview持有的bitmap 被cache驱逐了，如果bitmap的数据被清空了，则任何会导致当前屏幕刷新的操作（如滚动）都会致使程序崩溃，
+因为Imageview的draw函数里找不到数据了。 小弟我刚学android半年，才学疏浅， 最近看到大牛你的文章，就研究了一下，本人非常佩服你的奉献精神，不过本着求真务实的精神，希望跟你探讨下，
+不知道我所描述的是否有理。盼回复 或email: qinjunni2014@163.com
+
+zhaoyu_android4311 2015-02-25 11:21发表 [回复] [引用] [举报]你好，我有个实际工作中的问题，因为我是做电商客户端的，某些界面，比如商品详情或店铺详情等界面可以循环递归打开好多，
+无法保证始终就一个界面，外加其它界面也包含大量图片list等，如果我递归打开好多界面，且界面上的图基本都是不同url，所以内存缓存也不是很有效，因为即使用LruCache，图片已经过期从内存缓存中移走，
+但之前打开过的界面还引用着他们，无法回收，同时我还有递归打开一些新的界面，这样下去是不是很容易OOM，越到后边递归打开某个界面越容易吧？想问一下您有好方法吗？
+
+慶_new 2015-06-27 10:53发表 [回复] 引用“qinjunni2014”的评论：
+作者你好， 看了你的文章，再实际敲了一下代码，发现LRUCache并不不会释放内存，因为LRUCac...
+其实你的想法是对的，LRUCache本身并不一定会强制把cache的bitmap或者为其他内存对象释放，具体来说，LRUCache的直接作用压根就不是为了防止OOM，
+Android官网上面已经有很详细的解释了：Memory usage is kept down with components like this by recycling the child views as they move off-screen. The garbage collector also
+frees up your loaded bitmaps, assuming you don't keep any long lived references. This is all good and well, but in order to keep a fluid and fast-loading UI you want to
+avoid continually processing these images each time they come back on-screen. A memory and disk cache can often help here, allowing components to quickly reload processed images.
+看到没，只是为了让UI更流畅，load更快而已。
+但是为什么博主这里能ok呢？就像你说的，咱们假设一个bitmap在内存中分别被cache和一个imageview都引用了，那么就算cache取消了引用，imageview是还有的。
+正确的做法应该是你需要手动检查每个view是否还需要，如果不需要了就recycle它，cache只是相当于一个提醒的作用。
+具体做法可以参考这里：http://stackoverflow.com/questions/10743381/when-should-i-recycle-a-bitmap-using-lrucache
+
+LRUCache本身并不一定会强制把cache的bitmap或者为其他内存对象释放 http://stackoverflow.com/questions/10743381/when-should-i-recycle-a-bitmap-using-lrucache
+
+我在群里问的
+
+dadi-杭州(93932293) 16:01:08
+图片加载怎么防止内存溢出呢？ 使用LruCache，是保持了一个强引用，从LruCache移除的时候，Bitmap 并没处理回收，只是变的可以被回收了，还是不能防止内存溢出呀。
+
+dadi-杭州(93932293) 16:03:25
+@各种大神 图片需要自己判断回收么 recycle么
+
+///
+
+Dalvik虚拟机简要介绍和学习计划 http://blog.csdn.net/luoshengyang/article/details/8852432
+
+volley性能不佳？！http://www.oschina.net/question/65023_159832
+
+Volley与Picasso的对比 http://blog.happyhls.me/2014/11/27/volley%E4%B8%8Epicasso%E7%9A%84%E5%AF%B9%E6%AF%94/
+
+Volley和okHttp网络库的使用 https://mobile100.gitbooks.io/android/content/paper/volleyhe_okhttp_wang_luo_ku_de_shi_yong.html
+
+Volley 源码解析 http://www.codekk.com/blogs/detail/54cfab086c4761e5001b2542
+
+
+
+-----
+
+奋斗-深圳：问个问题 handler 更新 UI 和 runUIThread 更新的区别？
+
+亟亟-上海：runUIThread 如果当前线程不是UI线程,操作是发布到事件队列的UI 线程
+
+artshell-成都：runUIThread 使用的是 ActivityThread 创建的 MainLooper, MessageQueue 。你自己的handler可以单独创建Looper或者使用MainLooper
+
+玄同-福州：runUIThread是在主线程内刷新 handler实质就是发送一个message到handler所在的线程里面的消息池messagequeue中，
+          然后每一个线程都会有一个Looper  这个东西会不断遍历消息池 有东西的话就会拿出来发送给handler的 onHandlerReceive方法
+
+大熊-苏州：实质就是一个消息循环系统
+
+玄同-福州：handler实质其实就是线程间的通信而已  处理UI只是他的其中一种功能
+
+artshell-成都：处理UI，不一定非要在UI线程里才能处理， 单独的线程里创建一个Looper同样可以刷新UI
+
+大熊-苏州：子线程不能刷新这个ui本身的说法就是有问题的，Android这样 设计的目的是应该是防止多个子线程同时对ui操作造成不一致的问题，而handler的出现，就保证了不会发生这种事情，因为是队列机制了
+
+
+handler
+[线程间通讯][消息循环系统]
+
+handler thread looper messagequeue message
+
+
+-----
+给watersiteprduct 添加 img2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.

@@ -1,0 +1,4 @@
+netstat -ano | findstr "5037" // 排查哪路英雄占用了 5037 端口，找出他的 PID 来算账
+tasklist /fi "pid eq 5084 // 找到相关的 PID ，然后查看其名字，干掉即可
+
+// wandoujia2.exe shuame_helper.exe 干掉这些进程

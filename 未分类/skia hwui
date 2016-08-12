@@ -1,0 +1,13 @@
+
+
+
+when support hardware accelerate, it will use HWUI library.
+when you shut down hardware accelerate , it will use skia graphic library (for example: in your layout file: you could use android:layerType="software" )
+
+硬件加速
+
+
+---
+矢量图/向量图（根据程序算出来） 位图（像素图）
+https://zh.wikipedia.org/wiki/%E7%9F%A2%E9%87%8F%E5%9B%BE%E5%BD%A2
+https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%9B%BE

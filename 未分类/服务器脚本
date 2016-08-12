@@ -1,0 +1,20 @@
+
+prj=bjqwww
+act=online
+tb=branch
+cd /usr/local/zmax/prj/${prj}/$tb
+svn update
+rsync -r --exclude=".svn" --exclude="*.xml" . /usr/local/tomcat/webapps/${prj}
+if [ $act = "online" ]; then
+sh /root/prj/${prj}/$tb/notsvn/cpnotsvn1.sh
+echo "sh /root/prj/${prj}/$tb/notsvn/cpnotsvn1.sh"
+fi
+cd ..
+
+
+
+prj=bjqwww
+tb=branch
+\cp /root/prj/bjqwww/branch/notsvn/res/change/siteUrlWww.js /usr/local/tomcat/webapps/bjqwww/res/change/
+
+\cp /usr/local/tomcat/webapps/$prj/res/change/siteUrlWww.js /root/prj/$prj/$tb/notsvn/res/change/

@@ -1,0 +1,22 @@
+
+---
+limit
+
+select * from member order by id limit 0,10;
+select * from member order by id limit 10,10;
+
+前面是起始索引位置，后面是数量
+
+
+---
+Bitmap
+
+public int getPixel(int x, int y);
+
+返回像素位置上的颜色（不是ARGB，是RGB）
+
+
+--------
+UIL加载一张30M的图片会不会OOM,为什么
+XMPP丢包怎么解决，socket怎么保存离线消息，上线重发。。。
+项目里的http换成https要做哪些操作，多久能完成。。。

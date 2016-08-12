@@ -1,0 +1,14 @@
+[quote=qq_19823603][reply]baiyuxiong[/reply]
+我认为，可能是因为selector可以注册多个通...[/quote]
+
+说的好，阻塞是为了获得 IO channel（类似经典IO的流） 的过程，所以需要一个线程来配合 NIO
+
+
+阻塞的实现方式
+
+java 代码 while
+
+notifyAll();
+
+代码实现
+操作系统

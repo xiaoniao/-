@@ -1,0 +1,45 @@
+http://www.oschina.net/question/614765_77806
+
+
+看你要实时传输的还是非实时的.
+
+开头的过程都是捕捉音频然后编码.编码也可以说是语音压缩，压缩算法有n种.gsm,g711,g723,g729,g722,silk,ilbc ====,
+
+实时传输可以使用RTP协议.有开源的rtp协议实现库.
+
+在android平台上比较快速可以实现的有PJMEDIA.有java ports.
+
+
+http://www.apkbus.com/android-121514-1-1.html
+
+现在客户端录音，然后压缩，上传到服务器端，通过服务器端转发给接收端，播放出声音。
+一般都是用xmpp协议，扩展性比较好。缺点就是消息中的冗余多了点补充一下，为了考虑多平台的通用性，一般会选择一个主流的音频格式，在各个平台统一转码成这个格式
+
+
+当然也有一些比较笨的方法，比如用 http上传到服务器，然后在另外一端用个轮询的方式到服务器端来查询是否有新的内容，早期的很多 IM软件就是这么做的。
+
+
+
+录音 上传  这个思路真扯。这就不能做聊天，只能做个语音留言。用这个做语音聊天，我给你讲了五分钟的故事，你五分钟后才开始听？
+
+可通过AudioRecord和AudioTrack实现语音实时传输
+
+
+http://bashell.nodemedia.cn/archives/voip-on-android-use-juv-red5-speex-2.html
+http://bashell.nodemedia.cn/archives/android-opensles-speex-rtmp-voip-client.html
+http://www.cnblogs.com/milospooner/archive/2012/07/13/2590950.html
+
+
+
+录音
+编码
+传到服务器
+接收
+编码
+播放
+
+聆雨
+http://www.gracecode.com/rain.html
+
+耳机和音乐
+SoundPool 

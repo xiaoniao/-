@@ -1,0 +1,120 @@
+cmd:
+hasNextPage:false
+orderstr:gmtCreate desc
+pageNo:1
+pageSize:20
+token:FxZOptNrcMA2hMKKMNSyFPSxN/058UXzU305HIpg5fc=
+ver:1
+where:
+
+返回的是一个集合
+
+用集合的长度来判断是否有下一页 （弊端：如果最后一页刚好20条数据，那么就会产生一条请求）
+
+20
+
+1  0 - 20
+1 20 - 20
+
+
+
+
+
+
+
+PageBean
+
+前台验证，后台验证
+
+
+
+RESTful
+http://blog.jobbole.com/41233/
+
+------------------------
+
+a.
+Integer pageNo; // 当前页码
+Integer pageSize; //每页数据量
+String orderstr; //排序方式
+String where; //查询条件
+String cmd; //指令
+
+b.
+Integer allRow;       // 总记录数
+Integer totalPage;    // 总页数
+Integer currentPage;  // 当前页
+Integer pageSize;     // 每页记录数
+List<T> list;         // 要返回的某一页的记录列表
+
+
+
+
+前台需要设置“当前页数”和“一页的数量”
+后台需要设置“起始位置”和“结束位置”
+
+当前页  currentPage
+一页的数量 pageSize
+起始位置  (currentPage-1) *pageSize
+结束位置 pageSize
+
+判断是否有下一页
+a. 判断返回的集合的大小是否小于pageSize，小于pageSize就是没有下一页 （但是有一个极端情况如果最后一页刚好是pageSize条数据，已经没有下一页了，但是还会产生一条请求）
+b. 返回PageBean，和 totalPage 进行比较
+
+
+-----------------------------------------------------------------
+
+一、如何实现分页加载？
+
+第一种方式、
+参数：
+ pageNo，pageSize
+返回结果：
+ List<T>
+判断是否有下一页的方式：
+ 判断返回的集合的大小是否小于pageSize，小于pageSize就是没有下一页 （但是有一个极端情况如果最后一页刚好是pageSize条数据，虽然已经没有下一页了但还是会产生一次请求，如果是界面上有显示加载过程不推荐使用该方法）
+
+
+第二种方式、
+参数：
+ pageNo，pageSize
+返回结果：
+ PageBean
+判断是否有下一页的方式：
+ 和totalPage比，比totalPage小就会有下一页
+
+二、后台分页加载：
+核心是sql语句的分页加载 http://www.cnblogs.com/bbgasj/archive/2012/11/06/2756567.html
+例如：select * from order limit 10,20
+
+三、如果在分页的过程中数据发生变化怎么办？
+
+（这个只适合数据有排序的情况）
+传上一页最后一个数据的id，查询id所在的行数,然后和它原来的行数比较,计算相差的行数, 然后 statrpos 和 limit 加上相差的行数
+
+原始 第一种情况数据下移动 第二种情况数据上移
+
+1 1 2
+1 1 2
+1 1 2
+1 1 2
+1 1 2
+- - -
+2 1 3
+2 2 3
+2 2 3
+2 2 3
+2 2 3
+
+----
+
+https://www.pureweber.com/article/mysql-conditional-count/
+GOOGLE 分页加载 数据不同步
+https://segmentfault.com/q/1010000002654914
+哪种分页最有效率
+http://www.icodeguru.com/3/1967.html
+SQL分页查询总结
+http://www.cnblogs.com/bbgasj/archive/2012/11/06/2756567.html
+瀑布流向下拉取加载更多导致的数据重复问题***重点
+http://www.itzhai.com/waterfall-load-data-with-repeat-problem.html#read-more

@@ -1,0 +1,175 @@
+Picasso.with(context).load("http://i.imgur.com/DvpvklR.png").into(imageView);
+
+1、with context 是干什么的?
+
+2、后台线程发送主线程是怎么做的?
+
+3、ListView 是怎么保证图片不重复的?
+
+
+------
+
+流程
+
+Picasso.java
+
+1、public static Picasso with(Context context)
+
+2、singleton = new Builder(context).build(); Builder 里面还有好多东西  ..PicassoExecutorService 线程池 PriorityBlockingQueue 等级队列
+
+3、public RequestCreator load(Uri uri) --> RequestCreator
+
+RequestCreator.java
+
+4、RequestCreator(Picasso picasso, Uri uri, int resourceId) --> Request 构建RequestBuilder
+
+Request.java
+
+5、this.data = new Request.Builder(uri, resourceId, picasso.defaultBitmapConfig);
+
+RequestCreator.java
+
+6、public void into(ImageView target)
+
+7、Request request = createRequest(started); 构建Request
+
+8、有缓存 直接设置图片 bitmap 转 drawable
+
+9、没有缓存、
+    Action action = new ImageViewAction(picasso, target, request, memoryPolicy, networkPolicy, errorResId, errorDrawable, requestKey, tag, callback, noFade); ImageView 用弱引用包住了
+    picasso.enqueueAndSubmit(action);
+
+ImageViewAction.java
+
+10、ImageViewAction --> Action
+
+Action.java
+
+11、complete 回调函数里面有Bitmap
+
+RequestCreator.java
+
+12、picasso.enqueueAndSubmit(action);
+
+picasso.java
+
+13、dispatcher.dispatchSubmit(action); --> Dispatcher
+
+Dispatcher.java
+
+14、Dispatcher dispatcher = new Dispatcher(context, service, HANDLER, downloader, cache, stats); --> HANDLER
+
+15、static final Handler HANDLER = new Handler(Looper.getMainLooper()) { -->主线程 Handler 数据是通过 Message.obj 传递的
+
+      case HUNTER_BATCH_COMPLETE:
+        List<BitmapHunter> batch = (List<BitmapHunter>) msg.obj;
+        break;
+
+      case REQUEST_GCED:
+        Action action = (Action) msg.obj;
+        break;
+
+      case REQUEST_BATCH_RESUME:
+        List<Action> batch = (List<Action>) msg.obj;
+        break;
+
+//附加疑问 HandlerThread DispatcherThread DispatcherHandler
+16、void performSubmit(Action action, boolean dismissFailed) {
+
+17、BitmapHunter hunter = hunterMap.get(action.getKey()); 是一个线程 Runable || Map<String, BitmapHunter> hunterMap; 一个 map 用来保存 Runable
+
+18、hunter.attach(action); 添加到 actions 当前的请求，用于计算优先级
+
+19、hunter = forRequest(action.getPicasso(), this, cache, stats, action);
+
+BitmapHunter.java
+
+20、static BitmapHunter forRequest(Picasso picasso, Dispatcher dispatcher, Cache cache, Stats stats, Action action) {
+
+21、List<RequestHandler> requestHandlers = picasso.getRequestHandlers(); RequestHandler保存请求结果 从 picasso 里获得特别定制的 RequestHandler 一般使用默认的 （定制）
+
+Dispatcher.java
+
+22、hunter.future = service.submit(hunter); 提交网络请求
+
+23、hunterMap.put(action.getKey(), hunter);
+
+BitmapHunter.java
+
+24、BitmapHunter -> @Override public void run()
+
+25、result = hunt();
+
+26、RequestHandler.Result result = requestHandler.load(data, networkPolicy);
+
+NetworkRequestHandler.java
+
+27、Response response = downloader.load(request.uri, request.networkPolicy); --> Downloader
+
+Downloader.java
+OkHttp3Downloader.java
+
+28、@Override public Response load(Uri uri, int networkPolicy) throws IOException {
+
+29、okhttp3.Response response = client.newCall(builder.build()).execute(); Response->Downloader
+
+30、bitmap = decodeStream(is, data);
+
+31、stats.dispatchBitmapDecoded(bitmap);
+
+Stats.java (HandlerThread疑问作用)
+
+32、private void processBitmap(Bitmap bitmap, int what)
+
+33、handler.sendMessage(handler.obtainMessage(what, bitmapSize, 0)); handler -> StatsHandler
+
+34、stats.performBitmapDecoded(msg.arg1);
+
+BitmapHunter.java
+
+35、接25 dispatcher.dispatchComplete(this); dispatcher.dispatchFailed(this);
+
+Dispatcher.java
+
+36、void dispatchComplete(BitmapHunter hunter)
+
+37、BitmapHunter hunter = (BitmapHunter) msg.obj;
+    dispatcher.performComplete(hunter);
+
+38、void performComplete(BitmapHunter hunter)
+
+39、private void batch(BitmapHunter hunter)
+
+40、case HUNTER_DELAY_NEXT_BATCH: {
+    dispatcher.performBatchComplete();
+
+41、void performBatchComplete()
+
+42、mainThreadHandler.sendMessage(mainThreadHandler.obtainMessage(HUNTER_BATCH_COMPLETE, copy)); --> Picasso HANDLER 主线程 Hanlder
+
+Picasso.java
+
+43、hunter.picasso.complete(hunter);
+
+44、void complete(BitmapHunter hunter)
+
+45、private void deliverAction(Bitmap result, LoadedFrom from, Action action)
+
+46、action.complete(result, from);
+
+ImageViewAction.java
+
+50、PicassoDrawable.setBitmap(target, context, result, from, noFade, indicatorsEnabled);
+
+51、callback.onSuccess();
+
+52、结束
+
+使用 WeakReference 的地方
+1. Action RequestWeakReference
+2. DeferredRequestCreator WeakReference<ImageView> target;
+
+
+内存不足会回收
+
+LruCache

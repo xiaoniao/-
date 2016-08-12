@@ -1,0 +1,32 @@
+到底选择哪种架构？
+
+分析讨论几种不同的 android 架构
+
+一、架构分析蓝图
+
+
+待分析架构：
+
+todo-mvp MVP架构
+todo-mvp-loaders MVP架构 数据获取适用Loader
+todo-mvp-databinding MVP架构，适用DataBinding库
+
+in progress
+todo-mvp-contentproviders MVP架构和Content Providers
+todo-mvp-clean MVP架构和Clean Architecture.
+todo-mvp-dagger MVP架构和dagger依赖注入
+
+mvp-fragmentless MVP架构但是不使用Fragment
+mvp-RxJava  MVP架构并适用RxJava
+
+
+为什么用 todo 来演示？
+因为重点是凸显出架构，而且还需要一些功能需求来展示架构。
+
+到底选择什么架构？
+自己选择去吧，每一个架构都有评估说明
+
+
+https://github.com/googlesamples/android-architecture/tree/todo-mvp/todoapp
+https://github.com/googlesamples/android-architecture/tree/todo-mvp-loaders/todoapp
+https://github.com/googlesamples/android-architecture/tree/todo-databinding/todoapp

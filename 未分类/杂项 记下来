@@ -1,0 +1,246 @@
+透明度
+
+http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2013/0804/1503.html
+
+0~255透明度值 ，0为完全透明，255为不透明
+
+
+隐藏软键盘
+http://blog.163.com/fan_jianglong@126/blog/static/5617053620123104420199/
+((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE))
+.hideSoftInputFromWindow(WidgetSearchActivity.this.getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+
+状态栏 标题栏 高度（待验证）
+http://blog.163.com/dujin_dudu/blog/static/27909035201349116342/
+
+
+背景图太大怎么解决
+
+
+对话框汇总 Material Dialog
+https://github.com/afollestad/material-dialogs
+
+
+注册登录怎么优化体验
+输入是弹出软键盘 然后往上滚动
+
+
+输入框输入类型inputType
+http://blog.csdn.net/xqf222/article/details/9789143 待查阅官网
+
+
+二维码扫描
+
+  原理待写
+
+  修改
+  http://m.blog.csdn.net/article/details?id=46983293
+
+
+华为酷派手机开启日志
+http://blog.csdn.net/epeaktop/article/details/46878815
+
+dp和像素的转化和原理
+原理待写
+http://blog.csdn.net/arui319/article/details/6777133
+
+如何实现正方形Button
+http://blog.chengyunfeng.com/?p=465
+
+遇到问题遇到BUG怎么办？
+独立思考排查问题，不要先想着去GOOGLE 去问别人 和 去群里面问
+
+
+白屏待解决
+
+
+andorid studio 怎么关联 svn
+http://it165.net/pro/html/201404/11412.html
+http://ask.android-studio.org/?/article/97
+
+
+android studio android 项目 提交svn git 时需要提交哪些文件？
+https://github.com/github/gitignore/blob/master/Android.gitignore#L20
+https://www.zhihu.com/question/37910193
+http://www.cnblogs.com/LiuSiyuan/p/4309382.html
+
+
+为什么叫做表单提交》只是以前最早是由浏览器form来适用这种方式来提交数据的。
+而没有提供其他的 ajax 的方法来访问网络
+待考究
+<form action="/example/html/form_action.asp" method="get">
+  <p>First name: <input type="text" name="fname" /></p>
+  <p>Last name: <input type="text" name="lname" /></p>
+  <input type="submit" value="Submit" />
+</form>
+
+
+Base64加密 和 MD5 加密
+
+
+aar pom 区别
+
+
+js调用浏览器打印功能
+http://blog.csdn.net/hu_shengyang/article/details/6437698
+
+javaScript DOM 对象
+http://www.w3school.com.cn/jsref/dom_obj_document.asp
+
+javaScript 设置 name 属性
+http://bbs.csdn.net/topics/370059260
+
+EditText 获得焦点
+  usernameEdt.setFocusable(true);
+  usernameEdt.setFocusableInTouchMode(true);
+  usernameEdt.requestFocus();
+
+requestFocus：
+
+Call this to try to give focus to a specific view or to one of its descendants.
+A view will not actually take focus if it is not focusable (isFocusable returns false), or if it is focusable and it is not focusable in touch mode (isFocusableInTouchMode) while the device is in touch mode.
+
+setFocusable：
+
+Set whether this view can receive the focus.
+     *
+   Setting this to false will also ensure that this view is not focusable
+     * in touch mode.
+     *
+     * @param focusable If true, this view can receive the focus.
+     *
+     * @see #setFocusableInTouchMode(boolean)
+     * @attr ref android.R.styleable#View_focusable
+     */
+
+
+
+SQL SERVER 怎么导入导出数据
+
+
+SQL SERVER 删除表
+truncate table CKBusinessApplyOddDetail;
+
+
+直接用他们的标签不使用自己的标签
+
+
+他们配件的标签长什么样子，是对应配件的编码吗
+
+
+Gson 实体类不用用大写开头
+
+
+
+invalidate 无效，
+看看有没有加这个setWillNotDraw(false);
+
+canvas 绘制文字
+http://blog.csdn.net/hursing/article/details/18703599
+
+
+onMeasure
+
+
+Bitmap 缩放
+  http://www.cnblogs.com/rustfisher/p/5071494.html
+  Matrix 原理
+
+Bitmap 手势放大缩小怎么做？
+
+
+recyclerView 的倒计时功能怎么做?
+
+
+
+Http 怎么放list数组参数
+
+
+
+java 移位运算符
+  <<
+  >>    高位补1
+  >>>   高位补0
+  没有 <<<
+
+  public class BitMaskSample {
+  	public static void main(String[] args) {
+  		int value = 32767;
+  		System.out.println(value << 1); // 65534
+  		System.out.println(value >> 1); // 16383
+  		System.out.println(value >>> 1); // 16383
+
+  		value = -1;
+  		System.out.println(value << 1); // -2
+  		System.out.println(value >> 1); // -1
+  		System.out.println(value >>> 1); // 2147483647
+  		// >> 高位补1 >>> 高位补0
+  	}
+  }
+
+什么是大小端？
+
+java 如何判断大小端？
+
+这种方式可以判断
+0x0102030405060708L
+01 02 03 04 05 06 07 08 大端
+08 07 06 05 04 03 02 01 小端
+但Java屏蔽了这些细节,可以使用ByteOrder来判断
+
+static {
+    long a = unsafe.allocateMemory(8);
+    try {
+        unsafe.putLong(a, 0x0102030405060708L);
+        byte b = unsafe.getByte(a);
+        switch (b) {
+        case 0x01: byteOrder = ByteOrder.BIG_ENDIAN;     break;
+        case 0x08: byteOrder = ByteOrder.LITTLE_ENDIAN;  break;
+        default:
+            assert false;
+            byteOrder = null;
+        }
+    } finally {
+        unsafe.freeMemory(a);
+    }
+}
+
+比如一个数字 010203 数字是从右往做走的，最右边就是低位
+而内存地址 0123456 是从左边往右边走的，做左边是低位
+
+大端是数字的低位对应地址的高位 右侧对右侧
+小端是数字的低位对应地址的低位 右侧对左侧
+
+
+drawable 和 mipmap
+
+drawable/
+For bitmap files (PNG, JPEG, or GIF), 9-Patch image files, and XML files that
+describe Drawable shapes or Drawable objects that contain multiple states
+(normal, pressed, or focused). See the Drawable resource type.
+
+mipmap/
+For app launcher icons. The Android system retains the resources in this folder
+ (and density-specific folders such as mipmap-xxxhdpi) regardless of the screen
+  resolution of the device where your app is installed. This behavior allows
+  launcher apps to pick the best resolution icon for your app to display on
+   the home screen. For more information about using the mipmap folders,
+   see Managing Launcher Icons as mipmap Resources.
+
+http://stackoverflow.com/questions/28065267/mipmap-vs-drawable-folders
+http://stackoverflow.com/questions/23935810/mipmap-drawables-for-icons
+http://android-developers.blogspot.jp/2014/10/getting-your-apps-ready-for-nexus-6-and.html
+https://segmentfault.com/q/1010000002603418
+http://developer.android.com/tools/projects/index.html#mipmap
+http://code.oneapm.com/android/2015/08/25/android3/
+
+
+
+
+
+
+
+
+
+
+  .

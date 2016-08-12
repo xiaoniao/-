@@ -1,0 +1,35 @@
+http://stackoverflow.com/questions/21464693/android-skia-and-hardware-accelerated-graphics
+
+http://source.android.com/devices/graphics/index.html
+
+http://blog.imgtec.com/news/learning-about-the-android-graphics-subsystem
+
+http://mobile.51cto.com/amedia-376055.htm
+
+
+hwui简介
+http://blog.csdn.net/wind_hzx/article/details/20307093
+
+
+Android 4.2.2字体渲染流程
+http://blog.csdn.net/kangear/article/details/38798157
+
+Android 图形绘制（skia）
+http://blog.csdn.net/holdrise/article/details/8783435
+
+
+安卓字体渲染器
+https://github.com/bboyfeiyu/android-tech-frontier/tree/master/androidweekly/%E5%AE%89%E5%8D%93%E5%AD%97%E4%BD%93%E6%B8%B2%E6%9F%93%E5%99%A8
+
+
+那两年炼就的Android内功修养
+http://blog.csdn.net/luoshengyang/article/details/8923485
+
+
+Android控件TextView的实现原理分析
+http://blog.csdn.net/luoshengyang/article/details/8636153
+
+
+skia
+https://github.com/google/skia
+https://skia.org/

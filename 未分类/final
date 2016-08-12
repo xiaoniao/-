@@ -1,0 +1,105 @@
+fianl : https://en.wikipedia.org/wiki/Final_(Java)
+
+
+In the Java programming language, the final keyword is used in several different contexts to define an entity which may only be assigned once.
+
+final 关键字 服务于实例并且只能被指定一次
+
+Once a final variable has been assigned, it always contains the same value.
+If a final variable holds a reference to an object, then the state of the object may be changed by operations on the object, but the variable will always refer to the same object.
+This applies also to arrays, because arrays are objects;
+if a final variable holds a reference to an array, then the components of the array may be changed by operations on the array, but the variable will always refer to the same array.[1]
+
+指向一个对象，对象的值可以变，但final指向的还是那个对象
+数组也是一个对象
+
+final指定的是对象的引用地址
+
+1.---------------
+final variables
+A final variable can only be initialized once, either via an initializer or an assignment statement.  final变量必须被设值
+
+It does not need to be initialized at the point of declaration: this is called a "blank final" variable.
+blank final instance variable of a class must be definitely assigned in every constructor of the class in which it is declared;
+similarly, a blank final static variable must be definitely assigned in a static initializer of the class in which it is declared;
+otherwise, a compile-time error occurs in both cases.(Note: If the variable is a reference, this means that the variable cannot be re-bound to reference another object.
+But the object that it references is still mutable, if it was originally mutable.)
+
+[blank final] 必须在构造方法中设值
+
+Unlike the value of a constant, the value of a final variable is not necessarily known at compile time. 不像常量，final变量在编译时期是不需要的
+It is considered good practice to represent final constants in all uppercase, using underscore to separate words. 所以用大写和分割线命名是个好习惯
+Example:
+
+public class Sphere {
+
+    // pi is a universal constant, about as constant as anything can be.
+    public static final double PI = 3.141592653589793;
+
+    public final double radius;
+    public final double xPos;
+    public final double yPos;
+    public final double zPos;
+
+    Sphere(double x, double y, double z, double r) {
+         radius = r;
+         xPos = x;
+         yPos = y;
+         zPos = z;
+    }
+
+    [...]
+}
+Any attempt to reassign radius, xPos, yPos, or zPos will result in a compile error. In fact, even if the constructor doesn't set a final variable, attempting to set it outside the constructor will result in a compilation error.
+
+
+2.---------------
+final methods
+    final 方法不能
+
+    A common misconception is that declaring a class or method as final improves efficiency by allowing the compiler to directly insert the method wherever it is called (see inline expansion).
+    But because the method is loaded at runtime, compilers are unable to do this. 但是方法的加载是在运行时加载，编译器不能做这个
+    一个常见的误区是把方法或类声明成final，会让编译器内联函数优化,提升性能，这是错误的。
+
+    Only the runtime environment and JIT compiler know exactly which classes have been loaded, and so only they are able to make decisions about when to inline, whether or not the method is final.
+    只有运行时环境和jit编译器才能直达类有没有被加载进来，才可以直达方法是不是final，是不是需要inline
+
+    Machine code compilers which generate directly executable, platform-specific machine code, are an exception.
+    When using static linking, the compiler can safely assume that methods and variables computable at compile-time may be inlined.
+
+3.---------------
+final classes
+    final 类不能被继承
+
+4.---------------
+final and inner classes
+
+When an anonymous inner class is defined within the body of a method, all variables declared final in the scope of that method are accessible from within the inner class.
+For scalar values, once it has been assigned, the value of the final variable cannot change.
+For object values, the reference cannot change.
+This allows the Java compiler to "capture" the value of the variable at run-time and store a copy as a field in the inner class. 编译器会在运行时捕获这个值，并在内部类中复制一个字段
+Once the outer method has terminated and its stack frame has been removed, the original variable is gone but the inner class's private copy persists in the class's own memory.
+一旦外层的方法返回了栈被移除了，原始的值已经没有了，但是在内部类中还保存着一份代码在它内类部的内存中
+
+import javax.swing.*;
+
+import javax.swing.*;
+
+public class FooGUI {
+
+    public static void main(String[] args) {
+        //initialize GUI components
+        final JFrame jf = new JFrame("Hello world!"); //allows jf to be accessed from inner class body
+        jf.add(new JButton("Click me"));
+
+        // pack and make visible on the Event-Dispatch Thread
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                jf.pack(); //this would be a compile-time error if jf were not final
+                jf.setLocationRelativeTo(null);
+                jf.setVisible(true);
+            }
+        });
+    }
+}

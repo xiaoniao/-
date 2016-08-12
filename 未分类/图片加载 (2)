@@ -1,0 +1,139 @@
+最简单的加载显示图片的过程
+
+下载图片文件，解析成bitmap，显示出来
+
+
+1、图片的格式 （格式之前有记录过）
+2、下载下来的字节流 需要解析成 bitmap
+3、三级缓存
+    内存 Memory (LruCache 基于LinkedHashMap，按照使用的频率来排列bitmap,很少使用的会被移除，这里的引用关系是强引用，注意它并不是保证bitmap被移除时就被回收的还是要靠GC，
+                对比另外一种能够情况可以使用软引用来保存bitmap，也是靠的GC,在内存不足的时候GC会去回收它，但是从2.3开始系统会倾向于回收它所以不再使用这种方式。）
+    硬盘 Disk ()
+    网络 Netword
+
+
+Picasso
+    处理图片回收
+    取消图片下载、暂停图片加载，恢复图片加载
+    图片转换（尺寸、颜色...）
+    自动内存硬盘缓存
+    清除指定url文件内存缓存
+
+    占位图
+    失败图
+    重试机制
+
+    下载图片优先级(PriorityBlockingQueue PicassoExecutorService线程池)
+
+    RequestHandler 拦截特定请求
+
+    线程池的运用 Builder#executor
+
+    Resources
+    assets
+    files
+    content providers
+
+    后台线程下载图片 Ui线程设置图片（handler looper） -- 难点在这里 先去学习 handler looper 去
+
+    方便调试
+
+大方向（先看说明文档，不要一上来就看源代码）
+    思想+设计模式
+
+api设计简单
+Picasso.with(context).load("http://i.imgur.com/DvpvklR.png").into(imageView);
+
+三个下载线程 *
+    默认线程池中有3个线程
+    wifi下是4个线程
+    4g下是3个线程
+    3g下是2个线程
+    2g下是1个线程
+
+Downloader 下载（抽象出来网络、内存、硬盘 统一下载）
+    下载下来的数据
+    非2xx异常
+
+如何实现内存缓存？（注意线程安全）
+    LRU
+    用map保存？（想想都知道不能用集合） put set
+    本质上就是一个 LinkedHashMap
+    加进来的时候 执行 trimToSize 如何大于限定的最大尺寸，就从 map 中移除
+
+    -----
+    图片缓存机制
+        一种是软引用
+        另一种是内存缓存技术。
+            http://blog.chinaunix.net/uid-26930580-id-4138306.html
+                -----
+
+    new LinkedHashMap<String, Bitmap>(0, 0.75f, true); 待研究
+
+如何实现硬盘缓存？（注意线程安全）
+
+图片的大小计算 大小+字节数
+
+recycle的使用
+
+网络实时监听（有网络时开始下载，没网络时停止下载）
+
+代码
+
+    主要入口方法
+    -----
+    public static Picasso with(android.content.Context context)
+
+    The global default Picasso instance.
+
+    This instance is automatically initialized with defaults that are suitable to most implementations.
+
+        LRU memory cache of 15% the available application RAM
+        Disk cache of 2% storage space up to 50MB but no less than 5MB.
+            (Note: this is only available on API 14+ or if you are using a standalone library that provides a disk cache on all API levels like OkHttp)
+        Three download threads for disk and network access.
+
+    If these settings do not meet the requirements of your application you can construct your own with full control over the configuration by using Picasso.Builder to create a Picasso instance.
+    You can either use this directly or by setting it as the global instance with setSingletonInstance(com.squareup.picasso.Picasso).
+
+    个性定制 Picasso.Builder 不使用默认的 Builder 构造方法
+    -----
+
+    -----
+    默认配置
+    if (downloader == null) {
+      downloader = Utils.createDefaultDownloader(context);
+    }
+    if (cache == null) {
+      cache = new LruCache(context);
+    }
+    if (service == null) {
+      service = new PicassoExecutorService();
+    }
+    if (transformer == null) {
+      transformer = RequestTransformer.IDENTITY;
+    }
+
+    Stats stats = new Stats(cache);
+
+    Dispatcher dispatcher = new Dispatcher(context, service, HANDLER, downloader, cache, stats);
+    -----
+
+    -----
+    Action (弱引用 WeakReference, target, callback)
+        GetAction
+        FetchAction
+        TargetAction
+        RemoteViewsAction
+        ImageViewAction
+
+    Dispatcher
+
+其他：
+    多线程
+    线程间通讯
+    android 主线程和后台线程
+    事件机制
+    handler looper
+
+http://square.github.io/picasso/

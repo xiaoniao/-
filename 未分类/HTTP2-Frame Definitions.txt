@@ -1,0 +1,63 @@
+Frame Definitions
+
+  DATA                               https://segmentfault.com/a/1190000002605140
+  HEADERS                            https://segmentfault.com/a/1190000002605320
+  PRIORITY                           https://segmentfault.com/a/1190000002718083
+  RST_STREAM                         00
+  SETTINGS
+    SETTINGS Format                  https://segmentfault.com/a/1190000002586816
+    Defined SETTINGS Parameters
+    Settings Synchronization
+  PUSH_PROMISE                       00
+  PING                               https://segmentfault.com/a/1190000002718091
+  GOAWAY                             00
+  WINDOW_UPDATE                      https://segmentfault.com/a/1190000002675667
+    THE Flow-Control Window
+    Initial Flow-Control Window Size
+    Reducing the Stream Window Size
+  CONTINUATION                       https://segmentfault.com/a/1190000002718072
+
+HTTP/2 新特性浅析                     https://segmentfault.com/a/1190000002765886
+HTTP2.0的那些事                       https://segmentfault.com/a/1190000004399183
+http2 - server push 卡片              https://segmentfault.com/a/1190000002582648
+HTTP2-flow control                   https://segmentfault.com/a/1190000002676016
+http2 - stream                       https://segmentfault.com/a/1190000002601640
+http2-stream-optima-prioritation     https://segmentfault.com/a/1190000002642924
+
+rfc标准：http://www.rfc-editor.org/rfc/rfc7540.txt
+http://www.rfc-editor.org/rfc/rfc7541.txt
+
+前端开发面试问题及答案整理              https://segmentfault.com/a/1190000004071610
+帧是传输最小单位
+
+
+
+你也可以自己写一套协议，但可能没人家写的好，只不过人家写的好
+
+
+--
+网速和延迟什么关系？
+https://www.zhihu.com/search?type=content&q=%E7%BD%91%E9%80%9F+%E5%BB%B6%E8%BF%9F
+如何彻底解决 [ 网络延迟 ] 这个根本性的问题？
+https://www.zhihu.com/question/34689035
+为降低延迟时间，4G LTE 网络采用了什么方法？
+https://www.zhihu.com/question/19553283
+网络延迟与网速的关系？
+https://www.zhihu.com/question/32177758
+网络 网速 决定网速的是什么？怎么判断网速？
+http://jingyan.baidu.com/article/6766299731d7ce54d41b845a.html
+
+网络延迟
+http://baike.baidu.com/view/615361.htm
+
+--
+HTTP 代理
+图解正向代理、反向代理、透明代理
+http://z00w00.blog.51cto.com/515114/1031287
+
+--
+2016年4月16日 09:46:18
+HTTP2 需要客户端和服务端共同来实现的。另外 HTTP2 是基于 TLS 也就是 https
+接下来就应该学习如何搭建一个 HTTP2 服务器
+
+OKHTTP 实现了 android 端和服务端支持HTTP2

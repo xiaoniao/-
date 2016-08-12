@@ -1,0 +1,24 @@
+Gradle
+是用来干什么？
+
+管理项目结构？ 管理源代码？ 管理代码如何编译？操作class文件？ 介入源代码编译的过程？
+操作文件、生成文件、
+
+
+proguard-android.txt 混淆文件，就是修改类名变量名
+
+so包是什么简写？ 动态连接库 http://zhidao.baidu.com/question/359972076045955292.html
+
+
+http://wuxiaolong.me/2016/03/30/gradle4android1/
+http://wuxiaolong.me/2016/03/31/gradle4android2/
+http://wuxiaolong.me/2016/04/01/gradle4android3/
+
+
+文章分类
+View层
+  控件层
+  事件层
+设计模式
+网络层
+数据库层

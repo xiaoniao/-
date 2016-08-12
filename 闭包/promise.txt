@@ -1,0 +1,1 @@
+promise 构建类似于构建者模式 Builder

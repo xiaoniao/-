@@ -1,0 +1,72 @@
+一、
+A Handler allows you to [send and process] Message and Runnable objects associated with a thread's MessageQueue.
+Each Handler instance is associated with a single thread and that thread's message queue.
+When you create a new Handler, it is bound to the thread / message queue of the thread that is creating it
+    -- from that point on, it will deliver messages and runnables to that message queue and execute them as they come out of the message queue.
+
+一个线程，一个handler对应一个线程
+
+1. handler
+2. thread
+3. messageQueue 「thread's」
+
+为什么要有 handler。
+
+去翻翻「android 源码解析」「android权威」
+
+从 messageQuue 中取出来 执行
+
+
+There are two main uses for a Handler:
+    (1) to schedule messages and runnables to be executed as some point in the future; and 延迟执行
+    (2) to enqueue an action to be performed on a different thread than your own. 在不同线程间执行任务
+
+Scheduling messages is accomplished with the
+    post(Runnable)
+    postAtTime(Runnable, long)
+    postDelayed(Runnable, long)
+    sendEmptyMessage(int)
+    sendMessage(Message)
+    sendMessageAtTime(Message, long)
+    sendMessageDelayed(Message, long)
+The post versions allow you to enqueue Runnable objects to be called by the message queue when they are received;
+the sendMessage versions allow you to enqueue a Message object containing a bundle of data that will be processed by
+    the Handler's handleMessage(Message) method (requiring that you implement a subclass of Handler).
+
+post 执行线程
+send handlerMessage 处理消息
+
+// TODO 一个 handler 发送多次消息
+
+When posting or sending to a Handler, you can either allow the item to be processed
+as soon as the message queue is ready to do so, or specify a delay before it gets processed or absolute time for it to be processed.
+The latter two allow you to implement timeouts, ticks, and other timing-based behavior.
+
+可以选择立即执行也可以选择延迟执行
+
+When a process is created for your application, its main thread is dedicated to running a message queue that takes
+care of managing the top-level application objects (activities, broadcast receivers, etc) and any windows they create.
+You can create your own threads, and communicate back with the main application thread through a Handler.
+This is done by calling the same post or sendMessage methods as before, but from your new thread.
+The given Runnable or Message will then be scheduled in the Handler's message queue and processed when appropriate.
+
+
+
+进程被创建的时候，主线程会专门运行一个 messageQueue 来管理 activity boradcast receiver ... 和 创建的 windows
+
+创建自己的线程通过 handler 来和主线程通信
+
+那就只用一个 handler looper.getMainLooper() 就可以了 待测试
+
+上次失败的原因就是，就是自己对这些也不是很清楚
+
+二、
+Looper
+
+Class used to run a message loop for a thread.
+Threads by default do not have a message loop associated with them; to create one, call prepare() in the thread that is to run the loop,
+and then loop() to have it process messages until the loop is stopped.
+
+用来给线程创建消息队列的
+
+线程默认是没有消息队列的，为了创建循环的消息队列，需要使用 prepare() 和 loop()
