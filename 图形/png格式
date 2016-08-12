@@ -1,0 +1,685 @@
+研究PNG格式
+
+    ------------------------------------------------------------------------------------------------------------
+    根据文档，一个PNG文件必然以这样的8个字节开头：137 80 78 71 13 10 26 10 转换成十六进制就是：89 50 4e 47 0d 0a 1a 0a
+
+
+    IHDR chunk
+
+        接下来会是一个IHDR chunk
+
+        每个chunk都包含
+            1.Length: 4 bytes 无符号整数
+            2.Chunk Type: 4 bytes chunck 类型码（type code）
+            3.Chunk Data: 数据，长度为Length字节
+            4.CRC: 4 bytes校验码，由Chunk Type和Chunk Data计算而来。（循环冗余校验）
+
+        跳过文件开始的8个字节，紧接着的四个字节是00 00 00 0d，它应属于chunk的Length域，也就是说这个chunk的Chunk Data域长度应该为0x0d==13个字节。
+        再往后取4个字节，49 48 44 52，对应chunk的Chunk Type域，对应ASCII字符为IHDR。
+        接下来就应该是Chunk Data域了，它的长度由Length域指定，此时Length==0x0d==13，所以有13个字节。
+        跳过Chunk Data的13个字节，IHDR最后的4个字节3a 98 a0 bd应该是由Chunk Type和Chunk Data计算得到的CRC校验码。
+
+
+        一个IHDR chunk的数据段有13（0xd）个字节，包含了一个PNG文件的很多信息，这13个字节分别代表了：
+            Width:              4 bytes
+            Height:             4 bytes
+            Bit depth:          1 byte
+            Color type:         1 byte
+            Compression method: 1 byte
+            Filter method:      1 byte
+            Interlace method:   1 byte
+
+        关于width和height域，文档中还有这样一句话：
+        The maximum for each is 2^31-1 in order to accommodate languages that have difficulty with unsigned 4-byte values.
+        原来PNG还考虑了C/C++之外的语言。我觉得一般图像编解码什么的都应该是用C/C++写的。
+
+        试着写一段代码从IHDR chunk的数据段提取这些信息。
+        文档中有一句话值得重视：
+            All integers that require more than one byte must be in network byte order.
+            因此在处理PNG文件时，得考虑当前处理器是大端还是小端了。不过如果使用Python的struct module的话，直接指定文件的byte order即可。
+
+
+
+        {
+            'bit depth': 8, 8位灰度图
+            'color type': 0, 为灰度图
+            'compression method': 0, 根据文档，目前只有0一个值，没有其它选项
+            'filter method': 0,
+            'height': 16, 图像高度
+            'interlace method': 0,
+            'width': 16 图像宽度
+        }
+
+        在后续的文章中，我们将继续研究文件格式，压缩方法，以及五种filter，等等。
+    ------------------------------------------------------------------------------------------------------------
+    PNG中存放的图像数据都是经过压缩处理的。所以首先我们必须对其解压。为了方便研究，我们用Matlab创建了一个短小而简单的PNG文件：
+    找到IDAT区域
+
+
+    这好像不对！我们在Matlab中创建的图像为8×8的，应该有64个8 bit像素，也就是64个字节，怎么现在解压数据有72个字节？将decom的内容输出看看：
+
+        0     64      2      3     61     60      6      7     57
+        1      9     46    255    214      1     38    255    222
+        4      8    248    255      8      1    248    255      8
+        1     40    242      1     10    255    250      1      2
+        4    248      8      1    248    255     10      1    242
+        4      9    238    255     22      1    230    255     30
+        4      8    248    255      8      1    248    255      8
+        1      8     50      1    202    255     58      1    194
+
+        再看看创建图像时的原始数据矩阵：
+
+        64    2    3   61   60    6    7   57
+        9   55   54   12   13   51   50   16
+        17   47   46   20   21   43   42   24
+        40   26   27   37   36   30   31   33
+        32   34   35   29   28   38   39   25
+        41   23   22   44   45   19   18   48
+        49   15   14   52   53   11   10   56
+        8   58   59    5    4   62   63    1
+
+      比较两者，好像只有第一行差不多一样，前面多了个0，其它7行完全不同！其实这里并没有出什么差错。
+      在PNG编码时，在压缩之前，会使用自适应滤波器对像素矩阵的每一行进行滤波，而这种自适应滤波器会根据处理的行的特点，从5中滤波器中选择一种，进行处理，
+      并将使用的滤波器类型作为一个字节记录于滤波之后的行数据的开始，所以每一行多了一个字节。因此解压之后得到的数据并不是原始的图像数据，而是滤波之后的数据。
+      因此，如果我们将decom转换为一个9×8的矩阵的话，其中第一列为元素记录了所在行所使用的滤波器类型，0代表滤波器0（无操作），1代表滤波器1（sub filter），
+      2代表滤波器2（up filter），3代表滤波器3（Average filter），4代表滤波器4（Paeth filter），而其它数据则是滤波之后的数据。
+      以上面输出的decom为例，其第5行为：
+      4    248      8      1    248    255     10      1    242
+      第一个4代表这一行经过filter4(Paeth filter)处理，而后面的248 8 ...则是原始像素数据经过Paeth filter处理之后的数据。
+
+      文档给出了5中滤波器（其实是4中，滤波器0不改变输入数据）的差分方程，因此可以推出逆滤波器的差分方程，这里就不写了，直接给出针对8bit灰度图的5中逆滤波器的代码：
+
+
+      值得注意的是，逆滤波器代码经常可以看到将两个8bit数据相加，然后再求与0x0100相除得到的余数，这实际上是进行8bit补码的运算。
+      这些代码仍然放在《探索PNG（一）——PNG初探，IHDR Chunk》中创建的png_coder.py中，试着对解压数据进行逆滤波：
+
+
+      得到了Matlab里创建图像的矩阵的原始数据了。至此，我们成功地用Python手工对一个简单的8bit灰度PNG文件进行了解码。
+
+      接下来的一篇，我们将实现一个简单的，粗糙的，用于对8位灰度图PNG文件解码的函数。
+
+
+    ------------------------------------------------------------------------------------------------------------
+
+    探索PNG（三）——针对8位灰度图的解码器 一个极度原始的，8位灰度图的PNG解码器（只能处理8位灰度图）。
+
+    代码：
+
+    第一个函数get_ihdr_info，就是从IHDR Chunk的数据段中提取有关图像的属性。其数据段长度为13，前两个长度均为4个字节的单元包含了图像的宽度和高度，
+    后面的五个字节则分表代表了位深度，颜色类型，压缩方法，滤波器方法，以及交错模式。这个函数的返回值为dict类型，key为这些属性的名称，value为属性对应的值。
+
+    第二个函数decompress，则是将所有的IDAT的数据段的数据流进行解压（用zlib.decompress），
+    然后再逆滤波（用ifilter），最后返回最终的像素矩阵。
+
+    关于五种逆滤波器和总的逆滤波器在《探索PNG（二）——“手工”对8位灰度PNG文件解码》中已经说明过了。
+
+    最后就是decode函数，首先根据参数filename指定的文件名，打开PNG文件，验证文件开始的8个字节，看是否符合PNG标准，接下来从文件中读取IHDR chunk的数据段，交给get_ihdr_info获取图像的相关信息，
+    得到了图像的基本信息之后，在一个while循环中，找出所有IDAT Chunk，将它们的数据段的内容塞到一个StringIO对象com_stream中，
+    之后将com_stream中的内容送给decompress函数解码，得到最终的像素矩阵pix_mtx，并返回pix_mtx。
+
+    这里我们的代码只能对8位灰度图进行解码，要想消除此限制，我们得修改逆滤波器的代码，使其能够对各种bit depth和color type有效。
+    ------------------------------------------------------------------------------------------------------------
+    这里继续改进之前的解码器，让其支持更多的color type和bit depth，但是仍然只是一个粗糙的解码器，没有足够的异常处理，没有处理palette，等等，只是用来演示，完整代码见本文最后的Appendix。为了更加方便进行处理，我们将解码器做成了一个class，名为Decode：
+   class Decode:
+     ...
+   class Decode有一个重要方法是open，用来打开一个png文件，提取其中的重要信息，提取完后再关闭文件（所以取名为open似乎有点不太恰当）：
+
+       def open(self, filename):
+           def read(f, N):
+               bytes = f.read(N)
+               if bytes == '':
+                   raise EOFError
+               return bytes
+
+           def get_ihdr_info(data):
+               '''get information of png file which is contained in the IHDR chunk
+                   data:   IHDR chunk Chunk Data
+                   return value:   information'''
+               result = struct.unpack('!iiBBBBB', data)
+               # struct{
+               #   int32 width;
+               #   int32 height;
+               #   uint8 bit_depth;
+               #   uint8 color_type;
+               #   uint8 compression_method;
+               #   uint8 filter_method;
+               #   uint8 interlace_method;
+               # }
+               info = {}
+               prop = ['width', 'height', 'bit depth', \
+                       'color type', 'compression method', \
+                       'filter method', 'interlace method']
+               for idx, item in enumerate(prop):
+                   info[item] = result[idx]
+               return info
+
+           def calcbpp(ihdr_info):
+               num_items = {0:1, 2:3, 3:1, 4:2, 6:4}
+               bpp = math.ceil(ihdr_info['bit depth'] / 8.0 * num_items[ihdr_info['color type']])
+               return int(bpp)
+
+           self.__filename = filename
+           self.__chunks   = []
+           with open(filename, 'rb') as f:
+               pngsig = read(f, 8)
+               if pngsig != '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a':
+                   return None
+               ihdr_len    = struct.unpack('!I', read(f, 4))[0]
+               chunk_type  = read(f, 4)
+               if chunk_type != 'IHDR':
+                   return None
+               chunk_data          = read(f, ihdr_len)
+               self.__ihdr_info    = get_ihdr_info(chunk_data)
+               self.__bpp          = calcbpp(self.__ihdr_info)
+               ihdr_crc            = read(f, 4)
+               while True:
+                   try:
+                       chunk       = {}
+                       chunk_len   = read(f, 4)
+                       try:
+                           chunk_len   = struct.unpack('!I', chunk_len)[0]
+                       except TypeError:
+                           break
+                       chunk['len']       = chunk_len
+                       chunk['type']      = read(f, 4)
+                       chunk['data pos']  = f.tell()
+                       f.seek(chunk_len, 1)
+                       chunk['crc']       = read(f, 4)
+                       self.__chunks.append(chunk)
+                   except EOFError:
+                       break
+
+       在open中，首先利用了之前（参见《探索PNG（三）——针对8位灰度图的解码器》）就给出的get_ihdr_info函数获取IHDR Chunk中包含的图像信息，然后利用函数calcbpp计算图像的bpp值（我想bpp应该是bytes per pixel的缩写），bpp值和filter是密切相关的，filter的公式中包含了bpp项。在《探索PNG（二）——“手工”对8位灰度PNG文件解码》，《探索PNG（三）——针对8位灰度图的解码器》中由于考虑的都是8位灰度图，所以bpp为1。为了让解码器能够处理更多类型的图像，我们必须计算bpp值，并修改ifilter的代码。根据文档，bpp的计算方法是：bpp is defined as the number of bytes per complete pixel, rounding up to one. 由这句话我们写出了calcbpp：
+
+           def calcbpp(ihdr_info):
+               num_items = {0:1, 2:3, 3:1, 4:2, 6:4}
+               bpp = math.ceil(ihdr_info['bit depth'] / 8.0 * num_items[ihdr_info['color type']])
+               return int(bpp)
+
+   其中num_items是一个字典，key对应了图像的IHDR中记录的color type，而value为color type对应的通道个数，例如，如果color type为6，则图像包含R, G, B, 以及alpha通道，一共4个。
+
+       计算了bpp之后，open会继续扫描整个文件，找出每个Chunk，将它们的信息保存到一个list中，这个list的每一项对应一个dict，一个dict包含了一个Chunk的
+   len: 数据段长度
+   type: Chunk的类型
+   data pos:数据段相对于文件起始的偏移
+   crc: 该Chunk的校验码
+   至此，open的任务就结束了。
+
+       open一个png文件之后，就可以使用decode方法进行解码了。decode除了方法必有的self参数外，没有其它参数，因为解码所需要的各种信息在调用open时就已经保存到Decode类的对象中了：
+
+       def decode(self):
+           def ifilter0(before, upper, bpp):
+               '''Type 0: No filter'''
+               return before
+
+           def ifilter1(before, upper, bpp):
+               '''Type 1: Inverse Sub filter'''
+               N = len(before)
+               after = [0] * N
+               after[0:bpp] = before[0:bpp]
+               for k in range(bpp, N):
+                   after[k] = (before[k] + after[k-bpp]) % 0x0100
+               return after
+
+           def ifilter2(before, upper, bpp):
+               '''Type 2: Inverse Up filter'''
+               N = len(before)
+               after = [0] * N
+               for k in range(N):
+                   after[k] = (before[k] + upper[k]) % 0x0100
+               return after
+
+           def ifilter3(before, upper, bpp):
+               '''Type 3: Inverse Average filter'''
+               N = len(before)
+               after = [0] * N
+               for k in range(bpp):
+                   after[k] = (before[k] + upper[k] / 2) % 0x0100 # integer div
+               for k in range(bpp, N):
+                   after[k] = (before[k] + (after[k-bpp] + upper[k]) / 2) % 0x0100
+               return after
+
+           def ifilter4(before, upper, bpp):
+               '''Type 4: Inverse Paeth filter'''
+               def predictor(a, b, c):
+                   '''a = left, b = above, c = upper left'''
+                   p = a + b -c
+                   pa = abs(p - a)
+                   pb = abs(p - b)
+                   pc = abs(p - c)
+                   if pa <= pb and pa <= pc:
+                       return a
+                   elif pb <= pc:
+                       return b
+                   else:
+                       return c
+               N = len(before)
+               after = [0] * N
+               for k in range(bpp):
+                   after[k] = (before[k] + upper[k]) % 0x0100
+               for k in range(bpp, N):
+                   after[k] = (before[k] + predictor(after[k-bpp], upper[k], upper[k-bpp])) % 0x0100
+               return after
+
+           def ifilter(before, ihdr_info):
+               '''inverse filter
+                   before: decompressed data stream
+                   width:  width of the image
+                   height: height of the image
+                   return value: data stream which has been inverse filtered'''
+               width = ihdr_info['width']
+               height = ihdr_info['height']
+               bit_depth = ihdr_info['bit depth']
+               num_items = {0:1, 2:3, 3:1, 4:2, 6:4}
+               width = int(math.ceil(width * bit_depth * num_items[ihdr_info['color type']] / 8.0))
+               after = []
+               flt_type = [0] * height
+               flt_list = [ifilter0, ifilter1, ifilter2, ifilter3, ifilter4]
+               for k in range(height):
+                   after.append([ord(b) for b in before[(k*(width+1)+1):((k+1)*(width+1))]])
+                   flt_type[k] = ord(before[k * (width+1)])
+               after[0] = flt_list[flt_type[0]](after[0], [0] * width, self.__bpp)
+               for k in range(1, height):
+                   after[k] = flt_list[flt_type[k]](after[k], after[k-1], self.__bpp)
+               return after
+
+           def split_byte(b, width):
+               mask = 2**width - 1
+               li = []
+               for k in range(8/width):
+                   li.append(b & mask)
+                   b >>= width
+               li.reverse()
+               return li
+
+           def bytes2pixels(mtx, bit_depth, img_width):
+               if bit_depth < 8:
+                   for idx, line in enumerate(mtx):
+                       pixels = []
+                       for B in line:
+                           pixels.extend(split_byte(B, bit_depth))
+                       pixels = pixels[:img_width]
+                       mtx[idx] = pixels
+               if bit_depth == 16:
+                   for idx, line in enumerate(mtx):
+                       pixels = []
+                       for k in range(img_width):
+                           pixels.append(line[2*k]*2**8 + line[2*k+1])
+                       mtx[idx] = pixels
+               return mtx
+
+           com_stream = StringIO()
+           with open(self.__filename, 'rb') as f:
+               for chunk in self.__chunks:
+                   if chunk['type'] == 'IDAT':
+                       f.seek(chunk['data pos'])
+                       com_stream.write(f.read(chunk['len']))
+           decom   = zlib.decompress(com_stream.getvalue())
+           pix_mtx = ifilter(decom, self.__ihdr_info)
+           pix_mtx = bytes2pixels(pix_mtx, self.__ihdr_info['bit depth'], self.__ihdr_info['width'])
+           return pix_mtx
+
+       和open一样，我们在decode内部定义了几个函数。首先是ifilter0~ifilter4，我们将它们进行了改写，增加了参数bpp，这样就能处理除了8位灰度图以外其它类型的图像了。
+
+       为了处理bit depth小于8的图像，我们定义了一个辅助函数split_byte：
+
+           def split_byte(b, width):
+               mask = 2**width - 1
+               li = []
+               for k in range(8/width):
+                   li.append(b & mask)
+                   b >>= width
+               li.reverse()
+               return li
+
+   假设b=10110100，而width=2（即图像bit depth==2），则split_byte的返回值为：
+   [10, 11, 01, 00]
+   写成十进制即是：
+   [2, 3, 1, 0]
+
+       接下来是bytes2pixels，其实这个名字叫得也不恰当。它的实际功能是根据bit depth将矩阵mtx进行处理，使mtx的每一个元素对应一个像素的一个组成成分：
+
+           def bytes2pixels(mtx, bit_depth, img_width):
+               if bit_depth < 8:
+                   for idx, line in enumerate(mtx):
+                       pixels = []
+                       for B in line:
+                           pixels.extend(split_byte(B, bit_depth))
+                       pixels = pixels[:img_width]
+                       mtx[idx] = pixels
+               if bit_depth == 16:
+                   for idx, line in enumerate(mtx):
+                       pixels = []
+                       for k in range(img_width):
+                           pixels.append(line[2*k]*2**8 + line[2*k+1])
+                       mtx[idx] = pixels
+               return mtx
+
+       有了这些函数辅佐，decode方法接下来就开始了正式工作：从__chunks列表中找出所有的IDAT Chunk，将它们的数据写入StringIO对象com_stream中，利用zlib的decompress方法解压，用ifilter进行逆滤波，用bytes2pixels进行处理，得到了最后的，解码得到的矩阵：
+
+           com_stream = StringIO()
+           with open(self.__filename, 'rb') as f:
+               for chunk in self.__chunks:
+                   if chunk['type'] == 'IDAT':
+                       f.seek(chunk['data pos'])
+                       com_stream.write(f.read(chunk['len']))
+           decom   = zlib.decompress(com_stream.getvalue())
+           pix_mtx = ifilter(decom, self.__ihdr_info)
+           pix_mtx = bytes2pixels(pix_mtx, self.__ihdr_info['bit depth'], self.__ihdr_info['width'])
+           return pix_mtx
+
+   注意虽然最后得到的矩阵名为pix_mtx，但它的一个元素并不一定代表一个像素。例如一个RGB图像，pix_mtx的内容为：
+   [R(1,1), G(1,1), B(1,1), R(1,2), G(1,2), B(1,2), ...]
+   其中R(i, j)代表第i行j列的像素的R分量，G和B同理。
+
+       最后是三个Decode类对象的属性：
+
+       @property
+       def filename(self):
+           return self.__filename
+
+       @property
+       def ihdr_info(self):
+           return deepcopy(self.__ihdr_info)
+
+       @property
+       def chunks(self):
+           return deepcopy(self.__chunks)
+
+   其中filename为当前打开的png的文件名，ihdr_info为dict，包含了IHDR中的信息，chunks为list，包含了除IHDR外其它每个Chunk的信息。
+
+       让我们试验一下，首先是bit depth为1的图像，用Matlab制造一幅：
+   >> I = magic(5)
+
+   I =
+
+       17    24     1     8    15
+       23     5     7    14    16
+        4     6    13    20    22
+       10    12    19    21     3
+       11    18    25     2     9
+
+   >> I = I > 17
+
+   I =
+
+        0     1     0     0     0
+        1     0     0     0     0
+        0     0     0     1     1
+        0     0     1     1     0
+        0     1     1     0     0
+
+   >> imwrite(I, 'c:\lab\pngbd1.png', 'bitdepth', 1);
+   打开pylab，读取并解码：
+   In [10]: import png_coder as pc
+
+   In [11]: dc = pc.Decoder(r'c:\lab\pngbd1.png')
+
+   In [12]: dc.ihdr_info['bit depth']
+   Out[12]: 1
+
+   In [13]: dc.decode()
+   Out[13]:
+   [[0, 1, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1],
+    [0, 0, 1, 1, 0],
+    [0, 1, 1, 0, 0]]
+   解码成功。
+
+       看看RGB图的解码。以下面的图像为实验对象：
+
+   探索PNG（四）——支持更多的color <wbr>type和bit <wbr>depth
+
+   在pylab中输入：
+
+   In [5]: import png_coder as pc
+
+   In [6]: dc = pc.Decoder(r'c:\lab\20100605_2.png')
+
+   In [7]: dc.ihdr_info
+   Out[7]:
+   {'bit depth': 8,
+    'color type': 6,
+    'compression method': 0,
+    'filter method': 0,
+    'height': 561,
+    'interlace method': 0,
+    'width': 587}
+
+   从IHDR中可以看出，bit depth为8，color type为6，说明像素的每一个组成部分的宽度为8bit，每个像素有4个组成部分，R,G,B和alpha。用decode为其解码：
+
+   In [8]: mtx = dc.decode()
+
+   这样，我们得到了解码后的像素数据。但是仍然存在一个问题。我们想要观察解码的结果，mtx中每个像素都是平铺的，构成一个2D矩阵，但是matplotlib的imshow函数要求其为一个3D数组，于是我们将mtx转换为numpy的ndarray，进行一下转换操作：
+
+   In [9]: pic = array(mtx)
+
+   In [10]: pic.shape = (561, 587, 4)
+
+   然后输出归一化图像：
+
+   In [11]: imshow(pic / 255.)
+   Out[11]: <matplotlib.image.AxesImage object at 0x04CC69D0>
+
+   探索PNG（四）——支持更多的color <wbr>type和bit <wbr>depth
+
+       至此，我们的Decode可以处理大部分PNG图像了，但是有一种仍然还没有考虑在内，即带有palette的图像。这是后面需要考虑的问题了。
+
+
+   --未完待续--
+
+
+
+
+
+   Appendix:
+
+   import zlib
+   import struct
+   from StringIO import StringIO
+   from copy import deepcopy
+   import math
+
+   # ActivePython 2.6.4.8
+   # 2010.10.18
+   # xialulee
+
+   class Decoder:
+       def __init__(self, filename=None):
+           if not filename:
+               return
+           self.open(filename)
+
+       def open(self, filename):
+           def read(f, N):
+               bytes = f.read(N)
+               if bytes == '':
+                   raise EOFError
+               return bytes
+
+           def get_ihdr_info(data):
+               '''get information of png file which is contained in the IHDR chunk
+                   data:   IHDR chunk Chunk Data
+                   return value:   information'''
+               result = struct.unpack('!iiBBBBB', data)
+               # struct{
+               #   int32 width;
+               #   int32 height;
+               #   uint8 bit_depth;
+               #   uint8 color_type;
+               #   uint8 compression_method;
+               #   uint8 filter_method;
+               #   uint8 interlace_method;
+               # }
+               info = {}
+               prop = ['width', 'height', 'bit depth', \
+                       'color type', 'compression method', \
+                       'filter method', 'interlace method']
+               for idx, item in enumerate(prop):
+                   info[item] = result[idx]
+               return info
+
+           def calcbpp(ihdr_info):
+               num_items = {0:1, 2:3, 3:1, 4:2, 6:4}
+               bpp = math.ceil(ihdr_info['bit depth'] / 8.0 * num_items[ihdr_info['color type']])
+               return int(bpp)
+
+           self.__filename = filename
+           self.__chunks   = []
+           with open(filename, 'rb') as f:
+               pngsig = read(f, 8)
+               if pngsig != '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a':
+                   return None
+               ihdr_len    = struct.unpack('!I', read(f, 4))[0]
+               chunk_type  = read(f, 4)
+               if chunk_type != 'IHDR':
+                   return None
+               chunk_data          = read(f, ihdr_len)
+               self.__ihdr_info    = get_ihdr_info(chunk_data)
+               self.__bpp          = calcbpp(self.__ihdr_info)
+               ihdr_crc            = read(f, 4)
+               while True:
+                   try:
+                       chunk       = {}
+                       chunk_len   = read(f, 4)
+                       try:
+                           chunk_len   = struct.unpack('!I', chunk_len)[0]
+                       except TypeError:
+                           break
+                       chunk['len']       = chunk_len
+                       chunk['type']      = read(f, 4)
+                       chunk['data pos']  = f.tell()
+                       f.seek(chunk_len, 1)
+                       chunk['crc']       = read(f, 4)
+                       self.__chunks.append(chunk)
+                   except EOFError:
+                       break
+
+       def decode(self):
+           def ifilter0(before, upper, bpp):
+               '''Type 0: No filter'''
+               return before
+
+           def ifilter1(before, upper, bpp):
+               '''Type 1: Inverse Sub filter'''
+               N = len(before)
+               after = [0] * N
+               after[0:bpp] = before[0:bpp]
+               for k in range(bpp, N):
+                   after[k] = (before[k] + after[k-bpp]) % 0x0100
+               return after
+
+           def ifilter2(before, upper, bpp):
+               '''Type 2: Inverse Up filter'''
+               N = len(before)
+               after = [0] * N
+               for k in range(N):
+                   after[k] = (before[k] + upper[k]) % 0x0100
+               return after
+
+           def ifilter3(before, upper, bpp):
+               '''Type 3: Inverse Average filter'''
+               N = len(before)
+               after = [0] * N
+               for k in range(bpp):
+                   after[k] = (before[k] + upper[k] / 2) % 0x0100 # integer div
+               for k in range(bpp, N):
+                   after[k] = (before[k] + (after[k-bpp] + upper[k]) / 2) % 0x0100
+               return after
+
+           def ifilter4(before, upper, bpp):
+               '''Type 4: Inverse Paeth filter'''
+               def predictor(a, b, c):
+                   '''a = left, b = above, c = upper left'''
+                   p = a + b -c
+                   pa = abs(p - a)
+                   pb = abs(p - b)
+                   pc = abs(p - c)
+                   if pa <= pb and pa <= pc:
+                       return a
+                   elif pb <= pc:
+                       return b
+                   else:
+                       return c
+               N = len(before)
+               after = [0] * N
+               for k in range(bpp):
+                   after[k] = (before[k] + upper[k]) % 0x0100
+               for k in range(bpp, N):
+                   after[k] = (before[k] + predictor(after[k-bpp], upper[k], upper[k-bpp])) % 0x0100
+               return after
+
+           def ifilter(before, ihdr_info):
+               '''inverse filter
+                   before: decompressed data stream
+                   width:  width of the image
+                   height: height of the image
+                   return value: data stream which has been inverse filtered'''
+               width = ihdr_info['width']
+               height = ihdr_info['height']
+               bit_depth = ihdr_info['bit depth']
+               num_items = {0:1, 2:3, 3:1, 4:2, 6:4}
+               width = int(math.ceil(width * bit_depth * num_items[ihdr_info['color type']] / 8.0))
+               after = []
+               flt_type = [0] * height
+               flt_list = [ifilter0, ifilter1, ifilter2, ifilter3, ifilter4]
+               for k in range(height):
+                   after.append([ord(b) for b in before[(k*(width+1)+1):((k+1)*(width+1))]])
+                   flt_type[k] = ord(before[k * (width+1)])
+               after[0] = flt_list[flt_type[0]](after[0], [0] * width, self.__bpp)
+               for k in range(1, height):
+                   after[k] = flt_list[flt_type[k]](after[k], after[k-1], self.__bpp)
+               return after
+
+           def split_byte(b, width):
+               mask = 2**width - 1
+               li = []
+               for k in range(8/width):
+                   li.append(b & mask)
+                   b >>= width
+               li.reverse()
+               return li
+
+           def bytes2pixels(mtx, bit_depth, img_width):
+               if bit_depth < 8:
+                   for idx, line in enumerate(mtx):
+                       pixels = []
+                       for B in line:
+                           pixels.extend(split_byte(B, bit_depth))
+                       pixels = pixels[:img_width]
+                       mtx[idx] = pixels
+               if bit_depth == 16:
+                   for idx, line in enumerate(mtx):
+                       pixels = []
+                       for k in range(img_width):
+                           pixels.append(line[2*k]*2**8 + line[2*k+1])
+                       mtx[idx] = pixels
+               return mtx
+
+           com_stream = StringIO()
+           with open(self.__filename, 'rb') as f:
+               for chunk in self.__chunks:
+                   if chunk['type'] == 'IDAT':
+                       f.seek(chunk['data pos'])
+                       com_stream.write(f.read(chunk['len']))
+           decom   = zlib.decompress(com_stream.getvalue())
+           pix_mtx = ifilter(decom, self.__ihdr_info)
+           pix_mtx = bytes2pixels(pix_mtx, self.__ihdr_info['bit depth'], self.__ihdr_info['width'])
+           return pix_mtx
+
+       @property
+       def filename(self):
+           return self.__filename
+
+       @property
+       def ihdr_info(self):
+           return deepcopy(self.__ihdr_info)
+
+       @property
+       def chunks(self):
+           return deepcopy(self.__chunks)
+
+    ------------------------------------------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------------------------
