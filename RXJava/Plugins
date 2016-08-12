@@ -1,22 +1,27 @@
 
-Plugins allow you to modify the default behavior of RxJava in several respects:
+Plugins allow you to modify the default behavior of RxJava in several respects: 在这几个方面
 
   1、by changing the set of default computation, i/o, and new thread Schedulers
   2、by registering a handler for extraordinary errors that RxJava may encounter
   3、by registering functions that can take note of the occurrence of several regular RxJava activities
 
-Plugins允许你修改RxJava的默认行为，比如 修改默认的Schedulers,注入方法实现错误处理方式注册函数来观察RxJava一些方法
+Plugins允许你修改RxJava的默认行为，比如
+  修改默认的Schedulers
+  注入方法来实现错误处理
+  注册函数来观察RxJava一些方法的状态变化
 
 
 --RxJavaSchedulersHook
 
+RxJavaSchedulersHook允许你覆写默认的Schedulers,通过指定一个新的Schedulers
+
 This plugin allows you to override the default computation, i/o, and new thread Schedulers with Schedulers of your choosing.
-To do this, extend the class RxJavaSchedulersHook and override these methods:
+To do this, extend the class RxJavaSchedulersHook and override these methods: 如果这么做需要重写这四个方法
 
   1、Scheduler getComputationScheduler( )
   2、Scheduler getIOScheduler( )
   3、Scheduler getNewThreadScheduler( )
-  4、Action0 onSchedule(action)
+  4、Action0 onSchedule(action) @Deprecated
 
 Then follow these steps:
 
