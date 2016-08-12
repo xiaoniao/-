@@ -8,7 +8,7 @@ Plugins allow you to modify the default behavior of RxJava in several respects: 
 Plugins允许你修改RxJava的默认行为，比如
   修改默认的Schedulers
   注入方法来实现错误处理
-  注册函数来观察RxJava一些方法的状态变化
+  注册函数来观察RxJava一些方法的变化
 
 
 --RxJavaSchedulersHook
